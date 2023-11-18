@@ -15,7 +15,6 @@ use Filament\Tables\Columns\IconColumn;
 
 trait HasStatusColumn
 {
-
     public static function getStatusColumnLabel(): string
     {
         return 'Status';
@@ -23,7 +22,7 @@ trait HasStatusColumn
 
     public static function getStatusTableIconColumn(): IconColumn
     {
-        return  IconColumn::make('status')
+        return IconColumn::make('status')
             ->label(static::getStatusColumnLabel())
             ->color(fn (string $state): string => match ($state) {
                 'draft' => 'danger',
@@ -47,12 +46,12 @@ trait HasStatusColumn
             ->required($required);
     }
 
-    public static function getStatusFormRadioField(bool $required = true, $inline = true ): Fieldset
+    public static function getStatusFormRadioField(bool $required = true, $inline = true): Fieldset
     {
         return Fieldset::make()->schema([
             Radio::make(static::getStatusColumn())
                 ->label(static::getStatusColumnLabel())
-                ->options(static::getStatuses()) 
+                ->options(static::getStatuses())
                 ->default('draft')
                 ->inline($inline)
                 ->columnSpanFull()
@@ -80,6 +79,6 @@ trait HasStatusColumn
 
     public static function getStatusesForForm(): array
     {
-        return  static::getStatuses();
+        return static::getStatuses();
     }
 }

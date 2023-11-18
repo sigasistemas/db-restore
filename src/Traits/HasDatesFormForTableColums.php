@@ -12,7 +12,6 @@ use Filament\Tables\Columns\TextColumn;
 
 trait HasDatesFormForTableColums
 {
-
     protected static function getFieldDatesFormForTable($isToggledHiddenByCreatedDefault = false, $isToggledHiddenByUpdatedDefault = true)
     {
         return [

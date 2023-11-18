@@ -9,7 +9,6 @@
 namespace Callcocam\DbRestore\Traits;
 
 use App\Models\Restores\Connection;
-use App\Models\Restores\Relation;
 use Callcocam\DbRestore\Helpers\RestoreHelper;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +16,6 @@ use Illuminate\Support\Str;
 
 trait WithColumns
 {
-
     protected function getDataBases($schema)
     {
         $db = DB::connection($schema);
@@ -26,7 +24,6 @@ trait WithColumns
 
         return array_combine($tables, $tables);
     }
-
 
     protected function getTables(Connection $connection, $prefix = 'from')
     {
@@ -53,16 +50,14 @@ trait WithColumns
 
         $tables = $query->get()->pluck('name', 'name')->toArray();
 
-
         return $tables;
     }
 
-
-
-    protected function getColumns(Connection $connection,  $from_table, $prefix = 'from')
+    protected function getColumns(Connection $connection, $from_table, $prefix = 'from')
     {
         $from_database = $connection->database;
-        return  Cache::rememberForever("{$prefix}-{$connection}-{$from_database}-columns-{$from_table}", function () use ($connection, $from_database, $from_table) {
+
+        return Cache::rememberForever("{$prefix}-{$connection}-{$from_database}-columns-{$from_table}", function () use ($connection, $from_database, $from_table) {
             $db = DB::connection(RestoreHelper::getConnectionCloneOptions($connection));
 
             $whitelist = config('restore.tables.whitelist', []);
@@ -83,10 +78,9 @@ trait WithColumns
                 ->where('TABLE_NAME', 'NOT REGEXP', $blacklistString)
                 ->orderBy('TABLE_NAME');
 
-
             $columns = $query->orderBy('position')->get();
 
-            return  $columns->pluck('field', 'field')->toArray();
+            return $columns->pluck('field', 'field')->toArray();
         });
     }
 }
