@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('slug')->unique()->comment('Slug do filtro');
             $table->string('column')->comment('Coluna do filtro');
             $table->string('operator')->comment('Operador do filtro');
-            $table->string('value')->comment('Valor do filtro');
+            $table->string('value')->nullable()->comment('Valor do filtro');
             $table->enum('type', ['create', 'update', 'delete', 'restore', 'list'])->default('list')->comment('Tipo do filtro');
             if (config('db-restore.incrementing', false)) {
                 $table->morphs('filterable');

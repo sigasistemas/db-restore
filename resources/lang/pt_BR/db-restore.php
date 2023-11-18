@@ -138,13 +138,21 @@ return [
                 'label' => 'Modelo',
                 'placeholder' => 'Selecione o modelo',
             ],
-            'table_name' => [
+            'relation_table_name' => [
                 'label' => 'Nome da tabela',
                 'placeholder' => 'Digite o nome da tabela',
+            ],           
+            'relation_name' => [
+                'label' => 'Nome da relação',
+                'placeholder' => 'Digite o nome da relação',
             ],
-            'column_value' => [
-                'label' => 'Coluna do valor',
-                'placeholder' => 'Digite a coluna do valor',
+            'relation_column_to' => [
+                'label' => 'Filtrar pela coluna',
+                'placeholder' => 'Selecione',
+            ],
+            'relation_column_value' => [
+                'label' => 'Buscar o valor da coluna',
+                'placeholder' => 'Selecione',
             ],
             'childrens' => [
                 'label' => 'Selecionar filhos',

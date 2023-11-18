@@ -172,15 +172,15 @@ trait WithFormSchemas
                         'md' => '4',
                     ]),
                 Forms\Components\TextInput::make('name')
-                    ->label($this->getTraductionFormLabel('name'))
-                    ->placeholder($this->getTraductionFormPlaceholder('name'))
+                    ->label($this->getTraductionFormLabel('relation_name'))
+                    ->placeholder($this->getTraductionFormPlaceholder('relation_name'))
                     ->required()
                     ->columnSpan([
                         'md' => '4',
                     ]),
                 Forms\Components\Select::make('table_name')
-                    ->label($this->getTraductionFormLabel('table_name'))
-                    ->placeholder($this->getTraductionFormPlaceholder('table_name'))
+                    ->label($this->getTraductionFormLabel('relation_table_name'))
+                    ->placeholder($this->getTraductionFormPlaceholder('relation_table_name'))
                     ->required()
                     ->options(function () use ($record) {
                         if ($record->connectionTo) {
@@ -192,23 +192,23 @@ trait WithFormSchemas
                     ->columnSpan([
                         'md' => '4',
                     ]),
-                Forms\Components\Select::make('column_from')
-                    ->label($this->getTraductionFormLabel('column_from'))
-                    ->placeholder($this->getTraductionFormPlaceholder('column_from'))
-                    ->required()
-                    ->options(function () use ($record) {
-                        if ($connectionFrom = $record->connectionFrom) {
-                            return $this->getColumns($connectionFrom, $record->table_to, 'to');
-                        }
+                // Forms\Components\Select::make('column_from')
+                //     ->label($this->getTraductionFormLabel('column_from'))
+                //     ->placeholder($this->getTraductionFormPlaceholder('column_from'))
+                //     ->required()
+                //     ->options(function () use ($record) {
+                //         if ($connectionFrom = $record->connectionFrom) {
+                //             return $this->getColumns($connectionFrom, $record->table_to, 'to');
+                //         }
 
-                        return [];
-                    })
-                    ->columnSpan([
-                        'md' => '4',
-                    ]),
+                //         return [];
+                //     })
+                //     ->columnSpan([
+                //         'md' => '4',
+                //     ]),
                 Forms\Components\Select::make('column_to')
-                    ->label($this->getTraductionFormLabel('column_to'))
-                    ->placeholder($this->getTraductionFormPlaceholder('column_to'))
+                    ->label($this->getTraductionFormLabel('relation_column_to'))
+                    ->placeholder($this->getTraductionFormPlaceholder('relation_column_to'))
                     ->required()
                     ->options(function () use ($record) {
                         if ($connectionTo = $record->connectionTo) {
@@ -218,11 +218,11 @@ trait WithFormSchemas
                         return [];
                     })
                     ->columnSpan([
-                        'md' => '4',
+                        'md' => '6',
                     ]),
                 Forms\Components\Select::make('column_value')
-                    ->label($this->getTraductionFormLabel('column_value'))
-                    ->placeholder($this->getTraductionFormPlaceholder('column_value'))
+                    ->label($this->getTraductionFormLabel('relation_column_value'))
+                    ->placeholder($this->getTraductionFormPlaceholder('relation_column_value'))
                     ->required()
                     ->options(function () use ($record) {
                         if ($connectionTo = $record->connectionTo) {
@@ -232,7 +232,7 @@ trait WithFormSchemas
                         return [];
                     })
                     ->columnSpan([
-                        'md' => '4',
+                        'md' => '6',
                     ]),
                 Forms\Components\Textarea::make('description')
                     ->label($this->getTraductionFormLabel('description'))

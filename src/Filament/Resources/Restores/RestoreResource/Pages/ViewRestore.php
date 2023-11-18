@@ -30,7 +30,7 @@ class ViewRestore extends ViewRecord
                 ->action(function (Restore $record) {
 
                     $columns = $record->columns;
-
+ 
                     $from_table = $record->table_from;
 
                     $from_columns = RestoreHelper::getColumsSchema($columns, $from_table, 'column_from');
@@ -41,8 +41,8 @@ class ViewRestore extends ViewRecord
 
                     $filterList = $record->filters->filter(fn ($filter) => $filter->type == 'list')->all();
 
-                    $rows = RestoreHelper::getFromDatabaseRows($record, $from_table, $filterList);
-
+                    $rows = RestoreHelper::getFromDatabaseRows($record, $from_table, $filterList); 
+                    
                     RestoreHelper::beforeRemoveFilters($record); 
 
                     $chunks = array_chunk($rows, 1000);

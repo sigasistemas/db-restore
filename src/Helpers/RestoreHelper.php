@@ -69,6 +69,7 @@ class RestoreHelper
             return [$column[$column_name] => [
                 'columns' => sprintf('%s.%s', $from_table, $column[$column_name]),
                 'relation_id' => $column['relation_id'],
+                'relation' => $column['relation'],
                 'restore_id' => $column['restore_id'],
                 'column_from' => $column['column_from'],
                 'column_to' => $column['column_to'],
@@ -105,56 +106,93 @@ class RestoreHelper
         $default_value = data_get($column, 'default_value');
         $type = data_get($column, 'type');
         $relation = data_get($column, 'relation');
-        $data = $default_value;
-
-        if ($relation) {
-            //Conexao da tabela de destino
-            // $connectionName = $connectionName;
-            //Nome da tabela de destino que vamos recuperar o dado
-            $tableName = $relation->table_name;
-            //Coluna da tabela de destino que vamos recuperar o dado
-            //Geraralmente é o id, mas tambem pode ser o campo slug ou o campo que foi salvo o id da tabela de origem
-            $columnToName = $relation->column_to;
-            //Valor da coluna da tabela de origem que vamos usar para recuperar o dado
-            $columnFromName = $relation->column_from;
-            //Nome da coluna que vamos recuperar o dado
-            $columnValue = $relation->column_value;
-            //Se o valor da coluna da tabela de origem for igual ao valor da coluna da tabela de destino
-            if ($data = DB::connection($connectionName)
-                ->table($tableName)->where($columnToName, data_get($chunk, $columnFromName))->first()
-            ) {
-                $data = data_get($data, $columnValue);
-            }
+        if (!empty($default_value)) {
+            $data = $default_value;
         } else {
-            switch ($type) {
-                case 'date':
-                    $data = static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
 
-                    break;
-                case 'datetime':
-                    $data = static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+            if ($relation) {
+                $val = data_get($chunk, $column_from);
+                //Conexao da tabela de destino
+                // $connectionName = $connectionName;
+                //Nome da tabela de destino que vamos recuperar o dado
+                $tableName = $relation->table_name;
+                //Coluna da tabela de destino que vamos recuperar o dado
+                //Geraralmente é o id, mas tambem pode ser o campo slug ou o campo que foi salvo o id da tabela de origem
+                $columnToName = $relation->column_to;
+                //Valor da coluna da tabela de origem que vamos usar para recuperar o dado
+                $columnFromName = $relation->column_from;
+                //Nome da coluna que vamos recuperar o dado
+                $columnValue = $relation->column_value;
+                //Se o valor da coluna da tabela de origem for igual ao valor da coluna da tabela de destino
+                if (Cache::has(sprintf('_%s_%s', $column_from, $val))) {
+                    $data = Cache::get(sprintf('_%s_%s', $column_from, $val));
+                } else {
+                    $data = DB::connection($connectionName)
+                        ->table($tableName)->where($columnToName, $val)->value($columnValue);
+                    Cache::forever(sprintf('_%s_%s', $column_from, $val), $data);
+                }
+                return  $data;
+            } else {
+                switch ($type) {
+                    case 'date':
+                        return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
 
-                    break;
-                case 'time':
-                    $data = static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+                        break;
+                    case 'datetime':
+                        return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
 
-                    break;
-                case 'timestamp':
-                    $data = static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+                        break;
+                    case 'time':
+                        return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
 
-                    break;
-                case 'year':
-                    $data = static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+                        break;
+                    case 'timestamp':
+                        return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
 
-                    break;
-                case 'binary':
-                    $data = data_get($chunk, $column_from, $default_value);
+                        break;
+                    case 'year':
+                        return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
 
-                    break;
-                default:
-                    $data = data_get($chunk, $column_from, $default_value);
+                        break;
+                    case 'binary':
+                        return  data_get($chunk, $column_from, $default_value);
 
-                    break;
+                        break;
+                    case 'boolean':
+                        return  data_get($chunk, $column_from, $default_value);
+
+                        break;
+                    case 'char':
+                        return  data_get($chunk, $column_from, $default_value);
+
+                        break;
+                    case 'text':
+                        return  data_get($chunk, $column_from, $default_value);
+
+                        break;
+                    case 'json':
+                        if ($data = data_get($chunk, $column_from, $default_value)) {
+                            $data = explode(',', data_get($chunk, $column_from, $default_value));
+                            return  json_encode($data);
+                        } else {
+                            return  null;
+                        }
+
+                        break;
+                    case 'integer':
+                        if (in_array($column_from, ['status'])) {
+                            $status = data_get($chunk, $column_from, $default_value);
+                            return  $status  ? 'published' : 'draft';
+                        } else {
+                            return  data_get($chunk, $column_from, $default_value);
+                        }
+
+                        break;
+                    default:
+                        return  data_get($chunk, $column_from, $default_value);
+
+                        break;
+                }
             }
         }
 
@@ -177,15 +215,17 @@ class RestoreHelper
 
                 $from_table = $children->table_from;
 
-                $from_columns = RestoreHelper::getColumsSchema($columns, $from_table, 'column_from');
+                $from_columns = static::getColumsSchema($columns, $from_table, 'column_from');
 
                 $filterList = $children->filters->filter(fn ($filter) => $filter->type == 'list')->all();
 
-                $rows = RestoreHelper::getFromDatabaseRows($record, $from_table, $filterList);
+                $rows = static::getFromDatabaseRows($record, $from_table, $filterList);
+
+                static::beforeRemoveFilters($children);
 
                 $to_table = $children->table_to;
 
-                $to_columns = RestoreHelper::getColumsSchema($columns, $to_table, 'column_to');
+                $to_columns = static::getColumsSchema($columns, $to_table, 'column_to');
 
                 $chunks = array_chunk($rows, 1000);
 
@@ -198,15 +238,80 @@ class RestoreHelper
 
     public static function beforeRemoveFilters($record)
     {
-        if (! $record->filters) {
+        if (!$record->filters) {
             return;
         }
 
         $filterDeletes = $record->filters->filter(fn ($filter) => $filter->type == 'delete')->all();
 
         if ($filterDeletes) {
+            $connection = RestoreHelper::getConnectionCloneOptions($record->connectionTo);
+
             foreach ($filterDeletes as $filterDelete) {
-                DB::connection(RestoreHelper::getConnectionCloneOptions($record->connectionTo))->table($record->table_to)->where($filterDelete->column, $filterDelete->operator, $filterDelete->value)->delete();
+                $query = DB::connection($connection)->table($record->table_to);
+                $operator = $filterDelete->operator;
+                switch ($operator):
+                    case '=':
+                        $query->where($filterDelete->column, $operator, $filterDelete->value);
+                        break;
+                    case '!=':
+                        $query->where($filterDelete->column, $operator, $filterDelete->value);
+                        break;
+                    case '<':
+                        $query->where($filterDelete->column, $operator, $filterDelete->value);
+                        break;
+                    case '<=':
+                        $query->where($filterDelete->column, $operator, $filterDelete->value);
+                        break;
+                    case '>':
+                        $query->where($filterDelete->column, $operator, $filterDelete->value);
+                        break;
+                    case '>=':
+                        $query->where($filterDelete->column, $operator, $filterDelete->value);
+                        break;
+                    case 'like':
+                        $query->where($filterDelete->column, $operator, "%{$filterDelete->value}%");
+                        break;
+                    case 'not like':
+                        $query->where($filterDelete->column, $operator, "%{$filterDelete->value}%");
+                        break;
+                    case 'in':
+                        $query->whereIn($filterDelete->column, $filterDelete->value);
+                        break;
+                    case 'not in':
+                        $query->whereNotIn($filterDelete->column, $filterDelete->value);
+                        break;
+                    case 'between':
+                        $query->whereBetween($filterDelete->column, $filterDelete->value);
+                        break;
+                    case 'not between':
+                        $query->whereNotBetween($filterDelete->column, $filterDelete->value);
+                        break;
+                    case 'is null':
+                        $query->whereNull($filterDelete->column);
+                        break;
+                    case 'is not null':
+                        $query->whereNotNull($filterDelete->column);
+                        break;
+                endswitch;
+
+                if ($childrens = $record->childrens) {
+                    $data = $query->get()->pluck('id')->toArray();
+                    foreach ($childrens as $children) {
+                        $queryDelete = DB::connection($connection)->table($children->table_to);
+                        $tableName = $children->table_to;
+                        $type = $children->type;
+                        if ($type == 'polymorphic') {
+                            if ($tableName) {
+                                $tableName = Str::singular($tableName);
+                                $queryDelete->whereIn(sprintf('%sable_id', $tableName), $data);
+                            }
+                        }
+                        $queryDelete->delete();
+                    }
+                }
+
+                $query->delete();
             }
         }
     }
@@ -214,19 +319,14 @@ class RestoreHelper
     public static function getDataValues($rows, $to_columns, $connectionTo, $tableName = null, $type = null, $restore = null)
     {
         $values = [];
-
         foreach ($rows as $row) {
             $data = [];
             foreach ($to_columns as $key => $column) {
                 if (in_array($key, config('tenant.default_tenant_columns'))) {
-                    $data[$key] = Cache::rememberForever(sprintf('%s_%s', $key, data_get($row, 'company_id')), function () use ($row) {
-                        return static::getTenantId($row);
-                    });
+                    $data[$key] =  static::getTenantId($row);
                 } elseif (in_array($key, ['user_id'])) {
-                    $data[$key] = Cache::rememberForever(sprintf('%s_%s', $key, data_get($row, 'user_id')), function () use ($connectionTo, $row) {
-                        return DB::connection($connectionTo)->table('users')
-                            ->where(config('db-restore.oldId', 'old_id'), data_get($row, 'user_id'))->value('id');
-                    });
+                    $data[$key] = DB::connection($connectionTo)->table(config('db-restore.tables.user', 'users'))
+                        ->where(config('db-restore.oldId', 'old_id'), data_get($row, 'user_id'))->value('id');
                 } else {
                     $data[$key] = static::getValues($connectionTo, $row, $column);
                 }
@@ -235,7 +335,7 @@ class RestoreHelper
             //Verifica se existe a coluna id na tabela de destino
             //Se não existir, cria uma coluna id com o valor do ulid
             //Se existir, significa que a tabela de origem usa o id como chave primaria o ulid ou uuid
-            if (! array_key_exists('id', $to_columns)) {
+            if (!array_key_exists('id', $to_columns)) {
                 $data['id'] = strtolower((string) Str::ulid());
                 $data[config('db-restore.oldId', 'old_id')] = data_get($row, 'id');
             } else {
@@ -244,6 +344,7 @@ class RestoreHelper
                     $data['id'] = strtolower((string) Str::ulid());
                 }
             }
+
             $data['created_at'] = static::validateDate(data_get($row, 'created_at')) ? data_get($row, 'created_at') : now()->format('Y-m-d H:i:s');
             $data['updated_at'] = static::validateDate(data_get($row, 'updated_at')) ? data_get($row, 'updated_at') : now()->format('Y-m-d H:i:s');
             $data['deleted_at'] = static::validateDate(data_get($row, 'deleted_at')) ? data_get($row, 'deleted_at') : null;
@@ -261,7 +362,6 @@ class RestoreHelper
             }
             $values[] = $data;
         }
-
         return $values;
     }
 
