@@ -1,9 +1,11 @@
 <?php
+
 /**
-* Created by Claudio Campos.
-* User: callcocam@gmail.com, contato@sigasmart.com.br
-* https://www.sigasmart.com.br
-*/
+ * Created by Claudio Campos.
+ * User: callcocam@gmail.com, contato@sigasmart.com.br
+ * https://www.sigasmart.com.br
+ */
+
 namespace Callcocam\DbRestore;
 
 use Filament\Support\Assets\AlpineComponent;
@@ -152,7 +154,13 @@ class DbRestoreServiceProvider extends PackageServiceProvider
     protected function getMigrations(): array
     {
         return [
-            'create_db-restore_table',
+            'create_models_table',
+            'create_connections_table',
+            'create_restores_table',
+            'create_relations_table',
+            'create_columns_table',
+            'create_filters_table',
+            'create_childrens_table'
         ];
     }
 }

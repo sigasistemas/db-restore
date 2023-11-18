@@ -8,8 +8,8 @@
 
 namespace Callcocam\DbRestore\Helpers;
 
-use App\Models\Restores\Connection;
-use App\Models\Restores\Restore;
+use Callcocam\DbRestore\Models\Connection;
+use Callcocam\DbRestore\Models\Restore;
 use DateTime;
 use Illuminate\Bus\Batch;
 use Illuminate\Support\Facades\Bus;

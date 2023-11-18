@@ -1,11 +1,14 @@
 <?php
+
 /**
-* Created by Claudio Campos.
-* User: callcocam@gmail.com, contato@sigasmart.com.br
-* https://www.sigasmart.com.br
-*/
+ * Created by Claudio Campos.
+ * User: callcocam@gmail.com, contato@sigasmart.com.br
+ * https://www.sigasmart.com.br
+ */
+
 namespace Callcocam\DbRestore;
 
+use Callcocam\DbRestore\Filament\Resources; 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 
@@ -18,7 +21,11 @@ class DbRestorePlugin implements Plugin
 
     public function register(Panel $panel): void
     {
-        //
+        $panel->resources([
+            Resources\Restores\RestoreResource::class,
+            Resources\Restores\ModelResource::class,
+
+        ]);
     }
 
     public function boot(Panel $panel): void

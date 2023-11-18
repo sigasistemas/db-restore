@@ -1,0 +1,48 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('restore_childrens', function (Blueprint $table) {
+            if (config('db-restore.incrementing', false)) {
+                $table->id();
+                $table->unsignedBigInteger('user_id')->nullable();
+                $table->unsignedBigInteger('tenant_id')->nullable(); 
+                $table->unsignedBigInteger('restore_id')->nullable();
+            } else {
+                $table->ulid('id')->primary();
+                $table->ulid('user_id')->nullable();
+                $table->ulid('tenant_id')->nullable(); 
+                $table->ulid('restore_id')->nullable();
+            }
+            $table->string('name')->comment('Nome do filtro');
+            $table->string('slug')->unique()->comment('Slug do filtro');
+            $table->string('table_from')->comment('Tabela de origem');
+            $table->string('table_to')->comment('Tabela de destino');
+            $table->string('join_from_column')->nullable()->comment('Coluna de junção da tabela de origem');
+            $table->string('join_to_column')->nullable()->comment('Coluna de junção da tabela de destino'); 
+            $table->enum('type', ['one-to-one', 'one-to-many', 'one-to-many-inverse','polymorphic'])->default('one-to-one')->comment('Tipo de relacionamento');
+            $table->enum('status', ['draft', 'published'])->default('published')->comment('Status da restauração');
+            $table->text('description')->nullable()->comment('Descrição da restauração');
+            $table->timestamps();
+            $table->softDeletes();
+        });
+       
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('restore_childrens');
+    }
+};

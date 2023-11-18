@@ -8,8 +8,7 @@
 
 namespace Callcocam\DbRestore\Traits;
 
-use App\Models\Restores\Connection;
-use App\Models\Restores\Relation;
+use Callcocam\DbRestore\Models\Connection; 
 use Callcocam\DbRestore\Helpers\RestoreHelper;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;

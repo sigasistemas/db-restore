@@ -1,0 +1,53 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('restore_connections', function (Blueprint $table) {
+            if (config('db-restore.incrementing', false)) {
+                $table->id();
+                $table->unsignedBigInteger('user_id')->nullable();
+                $table->unsignedBigInteger('tenant_id')->nullable(); 
+            } else {
+                $table->ulid('id')->primary();
+                $table->ulid('user_id')->nullable();
+                $table->ulid('tenant_id')->nullable(); 
+            }
+            $table->string('name', 255)->nullable()->comment('Nome da conexão ex: mysql, pgsql, etc...');
+            $table->string('slug', 255)->nullable()->comment('Slug da conexão ex: mysql, pgsql, etc...');
+            $table->string('host', 255)->nullable()->default('localhost')->comment('Host da conexão');
+            $table->string('port', 255)->nullable()->default('3306')->comment('Porta da conexão');
+            $table->string('database', 255)->nullable()->comment('Database da conexão');
+            $table->string('username', 255)->nullable()->default('root')->comment('Username da conexão');
+            $table->string('password', 255)->nullable()->comment('Password da conexão');
+            $table->string('charset', 255)->nullable()->default('utf8mb4')->comment('Charset da conexão');
+            $table->string('prefix', 255)->nullable()->comment('Prefix da conexão');
+            $table->string('engine', 255)->nullable()->comment('Engine da conexão');
+            $table->string('collation', 255)->default('utf8mb4_unicode_ci')->nullable()->comment('Collation da conexão');
+            $table->string('url', 255)->nullable()->comment('Url da conexão');
+            $table->string('driver', 255)->nullable()->default('mysql')->comment('Driver da conexão');
+            $table->string('table', 255)->nullable()->comment('Table da conexão');
+            $table->enum('status', ['draft', 'published'])->default('published')->comment('Status da conexão');
+            $table->enum('type', ['from', 'to', 'all'])->default('all')->comment('Tipo da conexão');
+            $table->text('description')->nullable()->comment('Descrição da conexão');
+            $table->timestamps();
+            $table->softDeletes();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('restore_connections');
+    }
+};

@@ -8,7 +8,7 @@
 
 namespace Callcocam\DbRestore\Jobs;
 
-use App\Models\Restores\Restore;
+use Callcocam\DbRestore\Models\Restore;
 use Callcocam\DbRestore\Helpers\RestoreHelper;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
