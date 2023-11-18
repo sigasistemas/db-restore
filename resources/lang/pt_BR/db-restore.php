@@ -2,207 +2,206 @@
 
 // translations for Sigasistemas/DbRestore
 return [
-    'restore'=>[
-        'singular'=>'Restaurar',
-        'plural'=>'Restaurar',
-        'form'=>[
-            'name'=>[
-                'label'=>'Nome',
-                'placeholder'=>'Digite o nome'
-            ], 
-            'connection_to_id'=>[
-                'label'=>'Conexão para',
-                'placeholder'=>'Selecione a conexão para'
+    'restore' => [
+        'singular' => 'Restaurar',
+        'plural' => 'Restaurar',
+        'form' => [
+            'name' => [
+                'label' => 'Nome',
+                'placeholder' => 'Digite o nome',
             ],
-            'connection_from_id'=>[
-                'label'=>'Conexão de',
-                'placeholder'=>'Selecione a conexão de'
+            'connection_to_id' => [
+                'label' => 'Conexão para',
+                'placeholder' => 'Selecione a conexão para',
             ],
-            'table_from'=>[
-                'label'=>'Tabela de',
-                'placeholder'=>'Selecione a tabela de'
+            'connection_from_id' => [
+                'label' => 'Conexão de',
+                'placeholder' => 'Selecione a conexão de',
             ],
-            'table_to'=>[
-                'label'=>'Tabela para',
-                'placeholder'=>'Selecione a tabela para'
+            'table_from' => [
+                'label' => 'Tabela de',
+                'placeholder' => 'Selecione a tabela de',
             ],
-            'column_from'=>[
-                'label'=>'Coluna de',
-                'placeholder'=>'Selecione a coluna de'
+            'table_to' => [
+                'label' => 'Tabela para',
+                'placeholder' => 'Selecione a tabela para',
             ],
-            'column_to'=>[
-                'label'=>'Coluna para',
-                'placeholder'=>'Selecione a coluna para'
+            'column_from' => [
+                'label' => 'Coluna de',
+                'placeholder' => 'Selecione a coluna de',
             ],
-            'default_value'=>[
-                'label'=>'Valor padrão',
-                'placeholder'=>'Digite o valor padrão'
+            'column_to' => [
+                'label' => 'Coluna para',
+                'placeholder' => 'Selecione a coluna para',
             ],
-            'description'=>[
-                'label'=>'Descrição',
-                'placeholder'=>'Digite a descrição'
+            'default_value' => [
+                'label' => 'Valor padrão',
+                'placeholder' => 'Digite o valor padrão',
             ],
-            'status'=>[
-                'label'=>'Status',
-                'placeholder'=>'Selecione o status'
+            'description' => [
+                'label' => 'Descrição',
+                'placeholder' => 'Digite a descrição',
             ],
-            'host'=>[
-                'label'=>'Host',
-                'placeholder'=>'Digite o host'
+            'status' => [
+                'label' => 'Status',
+                'placeholder' => 'Selecione o status',
             ],
-            'port'=>[
-                'label'=>'Porta',
-                'placeholder'=>'Digite a porta'
+            'host' => [
+                'label' => 'Host',
+                'placeholder' => 'Digite o host',
             ],
-            'database'=>[
-                'label'=>'Database',
-                'placeholder'=>'Digite o database'
+            'port' => [
+                'label' => 'Porta',
+                'placeholder' => 'Digite a porta',
             ],
-            'username'=>[
-                'label'=>'Username',
-                'placeholder'=>'Digite o username'
+            'database' => [
+                'label' => 'Database',
+                'placeholder' => 'Digite o database',
             ],
-            'password'=>[
-                'label'=>'Password',
-                'placeholder'=>'Digite o password'
+            'username' => [
+                'label' => 'Username',
+                'placeholder' => 'Digite o username',
             ],
-            'charset'=>[
-                'label'=>'Charset',
-                'placeholder'=>'Digite o charset'
+            'password' => [
+                'label' => 'Password',
+                'placeholder' => 'Digite o password',
             ],
-            'prefix'=>[
-                'label'=>'Prefix',
-                'placeholder'=>'Digite o prefix'
+            'charset' => [
+                'label' => 'Charset',
+                'placeholder' => 'Digite o charset',
             ],
-            'engine'=>[
-                'label'=>'Engine',
-                'placeholder'=>'Digite o engine'
+            'prefix' => [
+                'label' => 'Prefix',
+                'placeholder' => 'Digite o prefix',
             ],
-            'collation'=>[
-                'label'=>'Collation',
-                'placeholder'=>'Digite o collation'
+            'engine' => [
+                'label' => 'Engine',
+                'placeholder' => 'Digite o engine',
             ],
-            'url'=>[
-                'label'=>'Url',
-                'placeholder'=>'Digite o url'
+            'collation' => [
+                'label' => 'Collation',
+                'placeholder' => 'Digite o collation',
             ],
-            'driver'=>[
-                'label'=>'Driver',
-                'placeholder'=>'Digite o driver'
+            'url' => [
+                'label' => 'Url',
+                'placeholder' => 'Digite o url',
             ],
-            'table'=>[
-                'label'=>'Table',
-                'placeholder'=>'Digite o table'
+            'driver' => [
+                'label' => 'Driver',
+                'placeholder' => 'Digite o driver',
             ],
-            'type'=>[
-                'label'=>'Tipo',
-                'placeholder'=>'Selecione o tipo'
+            'table' => [
+                'label' => 'Table',
+                'placeholder' => 'Digite o table',
             ],
-            'slug'=>[
-                'label'=>'Slug',
-                'placeholder'=>'Digite o slug'
+            'type' => [
+                'label' => 'Tipo',
+                'placeholder' => 'Selecione o tipo',
             ],
-            'status'=>[
-                'label'=>'Status',
-                'placeholder'=>'Selecione o status'
-            ], 
-            'columns'=>[
-                'label'=>'Selecionar colunas',
-                'description'=>'Configure as colunas para restaurar',
+            'slug' => [
+                'label' => 'Slug',
+                'placeholder' => 'Digite o slug',
             ],
-            'filters'=>[
-                'label'=>'Selecionar filtros',
-                'description'=>'Configure os filtros para restaurar',
+            'status' => [
+                'label' => 'Status',
+                'placeholder' => 'Selecione o status',
             ],
-            'column'=>[
-                'label'=>'Coluna',
-                'placeholder'=>'Selecione a coluna'
+            'columns' => [
+                'label' => 'Selecionar colunas',
+                'description' => 'Configure as colunas para restaurar',
             ],
-            'operator'=>[
-                'label'=>'Operador',
-                'placeholder'=>'Selecione o operador'
+            'filters' => [
+                'label' => 'Selecionar filtros',
+                'description' => 'Configure os filtros para restaurar',
             ],
-            'value'=>[
-                'label'=>'Valor',
-                'placeholder'=>'Digite o valor'
+            'column' => [
+                'label' => 'Coluna',
+                'placeholder' => 'Selecione a coluna',
             ],
-            'type'=>[
-                'label'=>'Tipo',
-                'placeholder'=>'Selecione o tipo'
+            'operator' => [
+                'label' => 'Operador',
+                'placeholder' => 'Selecione o operador',
             ],
-            'relation_id'=>[
-                'label'=>'Relação',
-                'placeholder'=>'Selecione a relação'
+            'value' => [
+                'label' => 'Valor',
+                'placeholder' => 'Digite o valor',
             ],
-            'restore_model_id'=>[
-                'label'=>'Modelo',
-                'placeholder'=>'Selecione o modelo'
+            'type' => [
+                'label' => 'Tipo',
+                'placeholder' => 'Selecione o tipo',
             ],
-            'table_name'=>[
-                'label'=>'Nome da tabela',
-                'placeholder'=>'Digite o nome da tabela'
+            'relation_id' => [
+                'label' => 'Relação',
+                'placeholder' => 'Selecione a relação',
             ],
-            'column_value'=>[
-                'label'=>'Coluna do valor',
-                'placeholder'=>'Digite a coluna do valor'
+            'restore_model_id' => [
+                'label' => 'Modelo',
+                'placeholder' => 'Selecione o modelo',
             ],
-            'childrens'=>[
-                'label'=>'Selecionar filhos',
-                'description'=>'Configure os filhos para restaurar',
+            'table_name' => [
+                'label' => 'Nome da tabela',
+                'placeholder' => 'Digite o nome da tabela',
             ],
-            'join_from_column'=>[
-                'label'=>'Coluna de junção de',
-                'placeholder'=>'Selecione a coluna de junção de'
+            'column_value' => [
+                'label' => 'Coluna do valor',
+                'placeholder' => 'Digite a coluna do valor',
             ],
-            'join_to_column'=>[
-                'label'=>'Coluna de junção para',
-                'placeholder'=>'Selecione a coluna de junção para'
+            'childrens' => [
+                'label' => 'Selecionar filhos',
+                'description' => 'Configure os filhos para restaurar',
             ],
-            'one-to-one'=>[
-                'label'=>'Um para um',
-                'description'=>'Um para um',
+            'join_from_column' => [
+                'label' => 'Coluna de junção de',
+                'placeholder' => 'Selecione a coluna de junção de',
             ],
-            'one-to-many'=>[
-                'label'=>'Um para muitos',
-                'description'=>'Um para muitos',
+            'join_to_column' => [
+                'label' => 'Coluna de junção para',
+                'placeholder' => 'Selecione a coluna de junção para',
             ],
-            'one-to-many-inverse'=>[
-                'label'=>'Um para muitos inverso',
-                'description'=>'Um para muitos inverso',
+            'one-to-one' => [
+                'label' => 'Um para um',
+                'description' => 'Um para um',
             ],
-            'polymorphic'=>[
-                'label'=>'Polimórfico',
-                'description'=>'Polimórfico',
+            'one-to-many' => [
+                'label' => 'Um para muitos',
+                'description' => 'Um para muitos',
             ],
-            
+            'one-to-many-inverse' => [
+                'label' => 'Um para muitos inverso',
+                'description' => 'Um para muitos inverso',
+            ],
+            'polymorphic' => [
+                'label' => 'Polimórfico',
+                'description' => 'Polimórfico',
+            ],
 
         ],
     ],
-    'model'=>[
-        'singular'=>'Modelo',
-        'plural'=>'Modelos',
-        'form'=>[
-            'name'=>[
-                'label'=>'Nome',
-                'placeholder'=>'Digite o nome'
+    'model' => [
+        'singular' => 'Modelo',
+        'plural' => 'Modelos',
+        'form' => [
+            'name' => [
+                'label' => 'Nome',
+                'placeholder' => 'Digite o nome',
             ],
-            'slug'=>[
-                'label'=>'Slug',
-                'placeholder'=>'Digite o slug'
+            'slug' => [
+                'label' => 'Slug',
+                'placeholder' => 'Digite o slug',
             ],
-            'description'=>[
-                'label'=>'Descrição',
-                'placeholder'=>'Digite a descrição'
+            'description' => [
+                'label' => 'Descrição',
+                'placeholder' => 'Digite a descrição',
             ],
-            'status'=>[
-                'label'=>'Status',
-                'placeholder'=>'Selecione o status'
-            ],
-        ],
-        'table'=>[
-            'name'=>[
-                'label'=>'Nome', 
+            'status' => [
+                'label' => 'Status',
+                'placeholder' => 'Selecione o status',
             ],
         ],
-    ]
+        'table' => [
+            'name' => [
+                'label' => 'Nome',
+            ],
+        ],
+    ],
 ];

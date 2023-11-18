@@ -8,14 +8,11 @@
 
 namespace Callcocam\DbRestore\Traits;
 
-use Closure;
-use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Textarea;
 
 trait HasEditorColumn
 {
-
     public static function getEditorColumnLabel(): string
     {
         return 'Descrição ou Detalhes';
@@ -35,7 +32,6 @@ trait HasEditorColumn
             ->columnSpanFull()
             ->required($required);
     }
-
 
     public static function getEditorColumn(): string
     {

@@ -43,6 +43,7 @@ trait HasUlids
         if (config('db-restore.uuid')) {
             return strtolower((string) Str::uuid());
         }
+
         return strtolower((string) Str::ulid());
     }
 
@@ -59,19 +60,19 @@ trait HasUlids
     public function resolveRouteBindingQuery($query, $value, $field = null)
     {
         if (config('db-restore.uuid')) {
-            if ($field && in_array($field, $this->uniqueIds()) && !Str::isUuid($value)) {
+            if ($field && in_array($field, $this->uniqueIds()) && ! Str::isUuid($value)) {
                 throw (new ModelNotFoundException)->setModel(get_class($this), $value);
             }
 
-            if (!$field && in_array($this->getRouteKeyName(), $this->uniqueIds()) && !Str::isUuid($value)) {
+            if (! $field && in_array($this->getRouteKeyName(), $this->uniqueIds()) && ! Str::isUuid($value)) {
                 throw (new ModelNotFoundException)->setModel(get_class($this), $value);
             }
         } else {
-            if ($field && in_array($field, $this->uniqueIds()) && !Str::isUlid($value)) {
+            if ($field && in_array($field, $this->uniqueIds()) && ! Str::isUlid($value)) {
                 throw (new ModelNotFoundException)->setModel(get_class($this), $value);
             }
 
-            if (!$field && in_array($this->getRouteKeyName(), $this->uniqueIds()) && !Str::isUlid($value)) {
+            if (! $field && in_array($this->getRouteKeyName(), $this->uniqueIds()) && ! Str::isUlid($value)) {
                 throw (new ModelNotFoundException)->setModel(get_class($this), $value);
             }
         }

@@ -12,7 +12,6 @@ use Callcocam\DbRestore\Models\Children;
 use Callcocam\DbRestore\Helpers\RestoreHelper;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -21,15 +20,20 @@ use Illuminate\Support\Facades\DB;
 
 class DbRestoreChidrenJob implements ShouldQueue
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Batchable;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(public Children $record, public $chunk, public  $to_columns, public $from_columns)
+    public function __construct(public Children $record, public $chunk, public $to_columns, public $from_columns)
     {
         //
     }
+
     /**
      * Execute the job.
      */
@@ -40,8 +44,7 @@ class DbRestoreChidrenJob implements ShouldQueue
         $model = DB::connection($fromConnection)
             ->table($this->record->table_to);
 
-        $values = RestoreHelper::getDataValues($this->chunk, $this->to_columns,   $fromConnection, $this->record->table_to, $this->record->type, $this->record->restore);
- 
+        $values = RestoreHelper::getDataValues($this->chunk, $this->to_columns, $fromConnection, $this->record->table_to, $this->record->type, $this->record->restore);
 
         $model->insert($values);
     }
