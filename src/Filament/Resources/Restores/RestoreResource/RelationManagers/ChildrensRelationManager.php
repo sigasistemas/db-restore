@@ -1,10 +1,11 @@
 <?php
 
 /**
-* Created by Claudio Campos.
-* User: callcocam@gmail.com, contato@sigasmart.com.br
-* https://www.sigasmart.com.br
-*/
+ * Created by Claudio Campos.
+ * User: callcocam@gmail.com, contato@sigasmart.com.br
+ * https://www.sigasmart.com.br
+ */
+
 namespace Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource\RelationManagers;
 
 use Callcocam\DbRestore\Models\Children;
@@ -17,7 +18,7 @@ use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
-use Filament\Tables\Table; 
+use Filament\Tables\Table;
 
 class ChildrensRelationManager extends RelationManager
 {
@@ -136,6 +137,7 @@ class ChildrensRelationManager extends RelationManager
                 ]),
             Forms\Components\Section::make($this->getTraduction('columns', 'restore', 'form',  'label'))
                 ->description($this->getTraduction('columns', 'restore', 'form', 'description'))
+                ->visible(fn (Children $record) => $record->restore->table_from && $record->restore->table_to)
                 ->collapsed()
                 ->schema(function (Children | null $record = null) {
                     if (!$record) {
@@ -154,6 +156,7 @@ class ChildrensRelationManager extends RelationManager
                 }),
             Forms\Components\Section::make($this->getTraduction('filters', 'restore', 'form',  'label'))
                 ->description($this->getTraduction('filters', 'restore', 'form',  'description'))
+                ->visible(fn (Children $record) => $record->restore->table_from)
                 ->collapsed()
                 ->schema(function (Children | null $record = null) {
                     if (!$record) {
@@ -165,6 +168,23 @@ class ChildrensRelationManager extends RelationManager
                             ->hiddenLabel()
                             ->schema(function () use ($record) {
                                 return $this->getFiltersSchemaForm($record->restore->connectionFrom, $record->restore->table_from);
+                            })
+                            ->columns(12)
+                            ->columnSpanFull()
+                    ];
+                }),
+
+            Forms\Components\Section::make($this->getTraduction('orderings', 'restore', 'form',  'label'))
+                ->description($this->getTraduction('orderings', 'restore', 'form',  'description'))
+                ->visible(fn (Children $record) => $record->restore->table_from)
+                ->collapsed()
+                ->schema(function (Children $record) {
+                    return  [
+                        Forms\Components\Repeater::make('orderings')
+                            ->relationship('orderings')
+                            ->hiddenLabel()
+                            ->schema(function () use ($record) {
+                                return $this->getOrderingsSchemaForm($record->restore->connectionFrom, $record->restore->table_from);
                             })
                             ->columns(12)
                             ->columnSpanFull()

@@ -16,7 +16,7 @@ class Restore extends AbstractModelRestore
 
     protected $table = 'restores';
 
-    protected $with = ['connectionFrom', 'connectionTo', 'columns', 'filters'];
+    protected $with = ['connectionFrom', 'connectionTo', 'columns', 'filters', 'orderings'];
 
     public function connections()
     {
@@ -41,6 +41,11 @@ class Restore extends AbstractModelRestore
     public function filters()
     {
         return $this->morphMany(Filter::class, 'filterable');
+    }
+
+    public function orderings()
+    {
+        return $this->morphMany(Ordering::class, 'orderingable')->orderBy('ordering', 'ASC');
     }
 
     public function restoreModel()

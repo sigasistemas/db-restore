@@ -22,6 +22,7 @@ use Filament\Forms;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use Illuminate\Support\Str;
 
 class EditExport extends EditRecord
 {
@@ -41,26 +42,42 @@ class EditExport extends EditRecord
                     $columns = $record->columns;
 
                     $file = new Spreadsheet();
-
-                    $sheet = $file->getActiveSheet(); 
+                    $file->getProperties()
+                        ->setCreator('Callcocam')
+                        ->setLastModifiedBy('Callcocam')
+                        ->setTitle($record->name)
+                        ->setSubject($record->name)
+                        ->setDescription($record->description ?? '');
+                    $sheet = $file->getActiveSheet();
 
                     $sheet->setTitle($record->name);
-
-                    $sheet->fromArray($columns->pluck('column_to')->toArray(), null, 'A1');
+                    foreach ($columns as   $column) {
+                        $sheet->setCellValue(sprintf('%s1', $column->column_from), Str::title($column->column_to));
+                    }
 
                     $rows = RestoreHelper::getFromDatabaseRows($record, $record->table_name);
 
-                    $to_columns = RestoreHelper::getColumsSchema($columns,$record->table_name, 'column_to');
+                    $to_columns = RestoreHelper::getColumsSchema($columns, $record->table_name, 'column_to');
 
-                    $values = RestoreHelper::getDataExportValues($rows, $to_columns, $record->connectionTo); 
-                    $key=0;
+                    $values = RestoreHelper::getDataExportValues($rows, $to_columns, $record->connectionTo);
+                    $key = 1;
                     foreach ($values as   $row) {
-                        $sheet->fromArray($row, null, sprintf('A%s', $key++));
-                    } 
+                        $key++;
+                        foreach ($columns as   $column) {
+                            $sheet->setCellValue(sprintf('%s%s', $column->column_from, $key), data_get($row, $column->column_to));
+                        }
+                    }
+                    $class = \PhpOffice\PhpSpreadsheet\Writer\Pdf\Mpdf::class;
+                    \PhpOffice\PhpSpreadsheet\IOFactory::registerWriter('Pdf', $class);
+                    $extensions = [
+                        'csv' => \PhpOffice\PhpSpreadsheet\IOFactory::WRITER_CSV,
+                        'xls' => \PhpOffice\PhpSpreadsheet\IOFactory::WRITER_XLS,
+                        'xlsx' => \PhpOffice\PhpSpreadsheet\IOFactory::WRITER_XLSX,
+                        'pdf' => 'Pdf',
+                    ];
+                    $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($file,  data_get($extensions, $record->extension));
 
-                    $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($file,  \PhpOffice\PhpSpreadsheet\IOFactory::WRITER_XLSX);
 
-                    
 
                     $file_name =  storage_path(sprintf('app/public/%s', sprintf('%s.%s', $record->slug, $record->extension)));
 
@@ -133,7 +150,7 @@ class EditExport extends EditRecord
                     ->label($this->getTraductionFormLabel('extension'))
                     ->placeholder($this->getTraductionFormPlaceholder('extension'))
                     ->options(function () {
-                        $options = config('restore.extension', ['csv', 'xls', 'xlsx']);
+                        $options = config('restore.extension', ['csv', 'xls', 'xlsx', 'pdf']);
                         $extensions = $options;
                         return array_combine($extensions, $extensions);
                     })
@@ -178,6 +195,22 @@ class EditExport extends EditRecord
                                 ->hiddenLabel()
                                 ->schema(function () use ($record) {
                                     return $this->getFiltersSchemaForm($record->connectionTo, $record->table_name);
+                                })
+                                ->columns(12)
+                                ->columnSpanFull()
+                        ];
+                    }),
+                Forms\Components\Section::make($this->getTraduction('orderings', 'restore', 'form',  'label'))
+                    ->description($this->getTraduction('orderings', 'restore', 'form',  'description'))
+                    ->visible(fn (Export $record) => $record->table_name)
+                    ->collapsed()
+                    ->schema(function (Export $record) {
+                        return  [
+                            Forms\Components\Repeater::make('orderings')
+                                ->relationship('orderings')
+                                ->hiddenLabel()
+                                ->schema(function () use ($record) {
+                                    return $this->getOrderingsSchemaForm($record->connectionTo, $record->table_name);
                                 })
                                 ->columns(12)
                                 ->columnSpanFull()

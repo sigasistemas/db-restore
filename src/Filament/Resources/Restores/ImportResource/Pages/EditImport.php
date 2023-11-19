@@ -186,6 +186,22 @@ class EditImport extends EditRecord
                                 ->columnSpanFull()
                         ];
                     }),
+                Forms\Components\Section::make($this->getTraduction('orderings', 'restore', 'form',  'label'))
+                    ->description($this->getTraduction('orderings', 'restore', 'form',  'description'))
+                    ->visible(fn (Import $record) => $record->table_name)
+                    ->collapsed()
+                    ->schema(function (Import $record) {
+                        return  [
+                            Forms\Components\Repeater::make('orderings')
+                                ->relationship('orderings')
+                                ->hiddenLabel()
+                                ->schema(function () use ($record) {
+                                    return $this->getOrderingsSchemaForm($record->connectionTo, $record->table_name);
+                                })
+                                ->columns(12)
+                                ->columnSpanFull()
+                        ];
+                    }),
                 static::getStatusFormRadioField(),
                 Forms\Components\Textarea::make('description')
                     ->label($this->getTraductionFormLabel('description'))

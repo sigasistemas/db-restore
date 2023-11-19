@@ -138,6 +138,22 @@ class EditRestore extends EditRecord
                                 ->columnSpanFull()
                         ];
                     }),
+                Forms\Components\Section::make($this->getTraduction('orderings', 'restore', 'form',  'label'))
+                    ->description($this->getTraduction('orderings', 'restore', 'form',  'description'))
+                    ->visible(fn (Restore $record) => $record->table_from)
+                    ->collapsed()
+                    ->schema(function (Restore $record) {
+                        return  [
+                            Forms\Components\Repeater::make('orderings')
+                                ->relationship('orderings')
+                                ->hiddenLabel()
+                                ->schema(function () use ($record) {
+                                    return $this->getOrderingsSchemaForm($record->connectionFrom, $record->table_from);
+                                })
+                                ->columns(12)
+                                ->columnSpanFull()
+                        ];
+                    }),
                 static::getStatusFormRadioField(),
                 Forms\Components\Textarea::make('description')
                     ->label($this->getTraductionFormLabel('description'))

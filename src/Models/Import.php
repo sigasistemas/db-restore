@@ -18,6 +18,8 @@ class Import extends AbstractModelRestore
     protected $guarded = ['id'];
 
     protected $table = 'restore_imports';
+
+    protected $with = ['connectionFrom', 'connectionTo', 'columns', 'filters', 'orderings'];
     
     public function connectionTo()
     {
@@ -42,5 +44,10 @@ class Import extends AbstractModelRestore
     public function filters()
     {
         return $this->morphMany(Filter::class, 'filterable');
+    }
+
+    public function orderings()
+    {
+        return $this->morphMany(Ordering::class, 'orderingable')->orderBy('ordering', 'ASC');
     }
 }

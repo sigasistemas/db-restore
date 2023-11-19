@@ -230,7 +230,18 @@ return [
                 'label' => 'Tabela',
                 'placeholder' => 'Digite a tabela',
             ],
-
+            'orderings' => [
+                'label' => 'Selecionar ordenações',
+                'description' => 'Configure as ordenações para restaurar',
+            ],
+            'direction' => [
+                'label' => 'Direção',
+                'placeholder' => 'Selecione a direção',
+            ],
+            'ordering' => [
+                'label' => 'Prioridade',
+                'placeholder' => 'Selecione a prioridade',
+            ],
 
         ],
     ],

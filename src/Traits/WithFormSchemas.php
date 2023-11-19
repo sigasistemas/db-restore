@@ -194,20 +194,7 @@ trait WithFormSchemas
                     ->columnSpan([
                         'md' => '4',
                     ]),
-                // Forms\Components\Select::make('column_from')
-                //     ->label($this->getTraductionFormLabel('column_from'))
-                //     ->placeholder($this->getTraductionFormPlaceholder('column_from'))
-                //     ->required()
-                //     ->options(function () use ($record) {
-                //         if ($connectionFrom = $record->connectionFrom) {
-                //             return $this->getColumns($connectionFrom, $record->table_to, 'to');
-                //         }
 
-                //         return [];
-                //     })
-                //     ->columnSpan([
-                //         'md' => '4',
-                //     ]),
                 Forms\Components\Select::make('column_to')
                     ->label($this->getTraductionFormLabel('relation_column_to'))
                     ->placeholder($this->getTraductionFormPlaceholder('relation_column_to'))
@@ -282,9 +269,9 @@ trait WithFormSchemas
         }
 
         $columns[] = $this->getColumnToSelect($record->connectionTo, $table_to)
-        ->columnSpan([
-            'md' => '2',
-        ]);
+            ->columnSpan([
+                'md' => '2',
+            ]);
 
         return  $this->getColumnsSchema($record, $columns, $relation);
     }
@@ -292,11 +279,34 @@ trait WithFormSchemas
     protected function getColumnsSchemaFileExportForm($record, $table_to, $relation = 'relation')
     {
         $columns = [];
+        $columns[] =   Forms\Components\Select::make('column_from')
+            ->label($this->getTraductionFormLabel('column_from'))
+            ->placeholder($this->getTraductionFormPlaceholder('column_from'))
+            ->required()
+            ->searchable()
+            ->options(function () use ($record) {
+                $columns = Cache::rememberForever("colunas-header", function () {
+                    $alfabetoExcel = [];
+                    for ($i = 65; $i <= 90; $i++) {
+                        $alfabetoExcel[] = chr($i);
+                    }
+                    for ($i = 65; $i <= 90; $i++) {
+                        for ($j = 65; $j <= 90; $j++) {
+                            $alfabetoExcel[] = chr($i) . chr($j);
+                        }
+                    }
+                    return  array_combine($alfabetoExcel, $alfabetoExcel);
+                });
 
+                return $columns;
+            })
+            ->columnSpan([
+                'md' => '2',
+            ]);
         $columns[] = $this->getColumnToSelect($record->connectionTo, $table_to)
-        ->columnSpan([
-            'md' => '4',
-        ]);
+            ->columnSpan([
+                'md' => '2',
+            ]);
 
         return  $this->getColumnsSchema($record, $columns, $relation);
     }
@@ -328,7 +338,7 @@ trait WithFormSchemas
                     'md' => '2',
                 ]);
         }
-        return  $$this->getColumnsSchema($record, $columns, $relation);
+        return  $this->getColumnsSchema($record, $columns, $relation);
     }
 
     protected function getColumnsSchema($record, $columns, $relation = 'relation')
@@ -445,6 +455,56 @@ trait WithFormSchemas
                     'list' => 'List',
                 ])
                 ->default('list')
+                ->columnSpan([
+                    'md' => '2',
+                ]),
+        ];
+    }
+    protected function getOrderingsSchemaForm($connection, $table)
+    {
+
+        return [
+            Forms\Components\TextInput::make('name')
+                ->label($this->getTraductionFormLabel('name'))
+                ->placeholder($this->getTraductionFormPlaceholder('name'))
+                ->required()
+                ->columnSpan([
+                    'md' => '3',
+                ]),
+            Forms\Components\Select::make('column')
+                ->label($this->getTraductionFormLabel('column'))
+                ->placeholder($this->getTraductionFormPlaceholder('column'))
+                ->required()
+                ->options(function () use ($connection, $table) {
+                    if ($connection) {
+                        return $this->getColumns($connection, $table, 'to');
+                    }
+
+                    return [];
+                })
+                ->columnSpan([
+                    'md' => '4',
+                ]),
+            Forms\Components\Select::make('direction')
+                ->label($this->getTraductionFormLabel('direction'))
+                ->placeholder($this->getTraductionFormPlaceholder('direction'))
+                ->required()
+                ->options([
+                    'ASC' => 'ASC',
+                    'DESC' => 'DESC',
+                ])
+                ->columnSpan([
+                    'md' => '3',
+                ]),
+            Forms\Components\Select::make('ordering')->label($this->getTraductionFormLabel('ordering'))
+                ->placeholder($this->getTraductionFormPlaceholder('ordering'))
+                ->required()
+                ->options([
+                    '1' => '1',
+                    '2' => '2',
+                    '3' => '3',
+                    '4' => '4',
+                ])
                 ->columnSpan([
                     'md' => '2',
                 ]),

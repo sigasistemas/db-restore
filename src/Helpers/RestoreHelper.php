@@ -32,6 +32,54 @@ class RestoreHelper
         return $d && $d->format($format) === $date;
     }
 
+    public static function queryFilters(&$query, $column, $operator, $value)
+    {
+        switch ($operator):
+            case '=':
+                $query->where($column, $operator, $value);
+                break;
+            case '!=':
+                $query->where($column, $operator, $value);
+                break;
+            case '<':
+                $query->where($column, $operator, $value);
+                break;
+            case '<=':
+                $query->where($column, $operator, $value);
+                break;
+            case '>':
+                $query->where($column, $operator, $value);
+                break;
+            case '>=':
+                $query->where($column, $operator, $value);
+                break;
+            case 'like':
+                $query->where($column, $operator, "%{$value}%");
+                break;
+            case 'not like':
+                $query->where($column, $operator, "%{$value}%");
+                break;
+            case 'in':
+                $query->whereIn($column, $value);
+                break;
+            case 'not in':
+                $query->whereNotIn($column, $value);
+                break;
+            case 'between':
+                $query->whereBetween($column, $value);
+                break;
+            case 'not between':
+                $query->whereNotBetween($column, $value);
+                break;
+            case 'is null':
+                $query->whereNull($column);
+                break;
+            case 'is not null':
+                $query->whereNotNull($column);
+                break;
+        endswitch;
+    }
+
     public static function getModelsOptions($search = '*.php')
     {
         $paths = config('db-restore.models.paths', [app_path('Models')]);
@@ -81,22 +129,28 @@ class RestoreHelper
         })->toArray();
     }
 
-    public static function getFromDatabaseRows(AbstractModelRestore $restore, $from_table, $filters = null)
+    public static function getFromDatabaseRows(AbstractModelRestore $restore, $from_table, $filters = null, $orderings = null)
     {
         $connection = $restore->connectionFrom;
 
         $from_connection = RestoreHelper::getConnectionCloneOptions($connection);
 
-        $models = DB::connection($from_connection)
+        $query = DB::connection($from_connection)
             ->table($from_table);
 
         if ($filters) {
             foreach ($filters as $filter) {
-                $models->where($filter->column, $filter->operator, $filter->value);
+                static::queryFilters($query, $filter->column, $filter->operator, $filter->value);
             }
         }
 
-        $rows = $models->get();
+        if ($orderings) {
+            foreach ($orderings as $ordering) {
+                $query->orderBy($ordering->column, $ordering->direction);
+            }
+        }
+
+        $rows = $query->get();
 
         return $rows->toArray();
     }
@@ -251,52 +305,7 @@ class RestoreHelper
 
             foreach ($filterDeletes as $filterDelete) {
                 $query = DB::connection($connection)->table($record->table_to);
-                $operator = $filterDelete->operator;
-                switch ($operator):
-                    case '=':
-                        $query->where($filterDelete->column, $operator, $filterDelete->value);
-                        break;
-                    case '!=':
-                        $query->where($filterDelete->column, $operator, $filterDelete->value);
-                        break;
-                    case '<':
-                        $query->where($filterDelete->column, $operator, $filterDelete->value);
-                        break;
-                    case '<=':
-                        $query->where($filterDelete->column, $operator, $filterDelete->value);
-                        break;
-                    case '>':
-                        $query->where($filterDelete->column, $operator, $filterDelete->value);
-                        break;
-                    case '>=':
-                        $query->where($filterDelete->column, $operator, $filterDelete->value);
-                        break;
-                    case 'like':
-                        $query->where($filterDelete->column, $operator, "%{$filterDelete->value}%");
-                        break;
-                    case 'not like':
-                        $query->where($filterDelete->column, $operator, "%{$filterDelete->value}%");
-                        break;
-                    case 'in':
-                        $query->whereIn($filterDelete->column, $filterDelete->value);
-                        break;
-                    case 'not in':
-                        $query->whereNotIn($filterDelete->column, $filterDelete->value);
-                        break;
-                    case 'between':
-                        $query->whereBetween($filterDelete->column, $filterDelete->value);
-                        break;
-                    case 'not between':
-                        $query->whereNotBetween($filterDelete->column, $filterDelete->value);
-                        break;
-                    case 'is null':
-                        $query->whereNull($filterDelete->column);
-                        break;
-                    case 'is not null':
-                        $query->whereNotNull($filterDelete->column);
-                        break;
-                endswitch;
-
+                static::queryFilters($query, $filterDelete->column, $filterDelete->operator, $filterDelete->value);
                 if ($childrens = $record->childrens) {
                     $data = $query->get()->pluck('id')->toArray();
                     foreach ($childrens as $children) {
@@ -380,16 +389,16 @@ class RestoreHelper
 
 
     public static function getExportValues($connectionName, $chunk, $column)
-    { 
+    {
         $column_from = data_get($column, 'column_to');
         $default_value = data_get($column, 'default_value');
         $type = data_get($column, 'type');
         $relation = data_get($column, 'relation');
         if (!empty($default_value)) {
             $data = $default_value;
-        } else { 
+        } else {
             $val = data_get($chunk, $column_from);
-             
+
             if ($relation) {
                 //Conexao da tabela de destino
                 // $connectionName = $connectionName;
@@ -413,21 +422,21 @@ class RestoreHelper
             }
 
             switch ($type) {
-                case 'date': 
-                    return  Carbon::parse($val)->format('d/m/Y');
+                case 'date':
+                    return  Carbon::parse($val);
 
                     break;
                 case 'datetime':
                 case 'timestamp':
-                    return  Carbon::parse($val)->format('d/m/Y H:i:s');
+                    return  Carbon::parse($val);
 
                     break;
                 case 'time':
-                    return  Carbon::parse($val)->format('H:i:s');
+                    return  Carbon::parse($val);
 
                     break;
                 case 'year':
-                    return  Carbon::parse($val)->format('Y');
+                    return  Carbon::parse($val);
 
                     break;
                 case 'binary':
@@ -461,9 +470,9 @@ class RestoreHelper
     public static function getDataExportValues($rows, $to_columns, $connectionTo)
     {
         $values = [];
-        foreach ($rows as $row) { 
+        foreach ($rows as $row) {
             $data = [];
-            foreach ($to_columns as $key => $column) { 
+            foreach ($to_columns as $key => $column) {
                 $data[$key] = static::getExportValues($connectionTo, $row, $column);
             }
             $values[] = $data;

@@ -16,6 +16,8 @@ class Children extends AbstractModelRestore
 
     protected $table = 'restore_childrens';
 
+    protected $with = ['restore', 'columns', 'filters', 'orderings'];
+
     public function restore()
     {
         return $this->belongsTo(Restore::class);
@@ -29,5 +31,10 @@ class Children extends AbstractModelRestore
     public function filters()
     {
         return $this->morphMany(Filter::class, 'filterable');
+    }
+
+    public function orderings()
+    {
+        return $this->morphMany(Ordering::class, 'orderingable')->orderBy('ordering', 'ASC');
     }
 }
