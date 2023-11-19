@@ -35,7 +35,7 @@ class CreateImport extends CreateRecord
                 Forms\Components\Select::make('connection_id')
                 ->label($this->getTraductionFormLabel('connection_id'))
                 ->placeholder($this->getTraductionFormPlaceholder('connection_id'))
-                ->relationship('connection', 'name')
+                ->relationship('connectionTo', 'name')
                 ->columnSpan([
                     'md' => 6
                 ])

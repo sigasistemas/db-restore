@@ -6,75 +6,71 @@
  * https://www.sigasmart.com.br
  */
 
-namespace Callcocam\DbRestore\Filament\Resources\Restores\ImportResource\Pages;
+namespace Callcocam\DbRestore\Filament\Resources\Restores\ExportResource\Pages;
 
-use Callcocam\DbRestore\Filament\Resources\Restores\ImportResource;
-use Callcocam\DbRestore\Models\Import;
+use  Callcocam\DbRestore\Filament\Resources\Restores\ExportResource;
 use Callcocam\DbRestore\Helpers\RestoreHelper;
+use  Callcocam\DbRestore\Models\Export;
+use Callcocam\DbRestore\Traits\HasDatesFormForTableColums;
 use Callcocam\DbRestore\Traits\HasStatusColumn;
 use Callcocam\DbRestore\Traits\HasTraduction;
-use Callcocam\DbRestore\Traits\HasUploadFormField;
 use Callcocam\DbRestore\Traits\WithColumns;
 use Callcocam\DbRestore\Traits\WithFormSchemas;
 use Filament\Actions;
 use Filament\Forms\Form;
 use Filament\Forms;
-use Filament\Forms\Set;
 use Filament\Resources\Pages\EditRecord;
-use Illuminate\Bus\Batch;
-use Illuminate\Support\Facades\Bus;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
-class EditImport extends EditRecord
+class EditExport extends EditRecord
 {
-    use HasTraduction, HasStatusColumn, WithColumns, WithFormSchemas, HasUploadFormField;
+    use HasTraduction, HasStatusColumn, HasDatesFormForTableColums, WithColumns, WithFormSchemas;
 
-    protected static string $resource = ImportResource::class;
+    protected static string $resource = ExportResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('Restore')
-                ->visible(fn (Import $record) => $record->columns->count() > 0)
-                ->icon('fas-upload')
-                ->color('success')
-                ->action(function (Import $record) {
+            Actions\Action::make('export')
+                ->icon('fas-file-export')
+                ->visible(fn (Export $record) => $record->columns->count())
+                ->label($this->getTraduction('export', 'export', 'action',  'label'))
+                ->action(function (Export $record) {
+
                     $columns = $record->columns;
 
-                    $from_table = $record->table_name;
+                    $file = new Spreadsheet();
 
-                    if (Storage::exists($record->file)) {
+                    $sheet = $file->getActiveSheet(); 
 
-                        $to_columns = RestoreHelper::getColumsSchema($columns, $from_table, 'column_to');
+                    $sheet->setTitle($record->name);
 
-                        $sheetData = Cache::rememberForever("{$record->file}-column1", function () use ($record) {
-                            $inputFileName = Storage::path($record->file);
+                    $sheet->fromArray($columns->pluck('column_to')->toArray(), null, 'A1');
 
-                            $testAgainstFormats = [
-                                \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLS,
-                                \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLSX,
-                                \PhpOffice\PhpSpreadsheet\IOFactory::READER_CSV,
-                            ];
-                            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($inputFileName, 0, $testAgainstFormats);
+                    $rows = RestoreHelper::getFromDatabaseRows($record, $record->table_name);
 
-                            return  $spreadsheet->getActiveSheet()->toArray(true, true, true, true);
-                        });
-                        unset($sheetData[1]);
+                    $to_columns = RestoreHelper::getColumsSchema($columns,$record->table_name, 'column_to');
 
-                        $chunks = array_chunk($sheetData, 1000);
+                    $values = RestoreHelper::getDataExportValues($rows, $to_columns, $record->connectionTo); 
+                    $key=0;
+                    foreach ($values as   $row) {
+                        $sheet->fromArray($row, null, sprintf('A%s', $key++));
+                    } 
 
-                        $batch =  Bus::batch([])->then(function (Batch $batch) use ($record) {
-                        })->name($record->name)->dispatch();
+                    $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($file,  \PhpOffice\PhpSpreadsheet\IOFactory::WRITER_XLSX);
 
-                        $record->table_to = $from_table;
+                    
 
-                        RestoreHelper::beforeRemoveFilters($record);
+                    $file_name =  storage_path(sprintf('app/public/%s', sprintf('%s.%s', $record->slug, $record->extension)));
 
-                        foreach ($chunks as $chunk) {
-                            $batch->add(new \Callcocam\DbRestore\Jobs\DbRestoreFileJob($record, $chunk, $to_columns));
-                        }
-                    }
+                    $writer->save($file_name);
+
+                    $record->update([
+                        'file' => sprintf('%s.%s', $record->slug, $record->extension),
+                    ]);
+
+                    return Storage::disk($record->disk)->download(sprintf('%s.%s', $record->slug, $record->extension));
                 }),
             Actions\DeleteAction::make(),
             Actions\ForceDeleteAction::make(),
@@ -108,10 +104,15 @@ class EditImport extends EditRecord
                     ->columnSpan([
                         'md' => 4
                     ]),
+                Forms\Components\TextInput::make('file')
+                    ->label($this->getTraductionFormLabel('file'))
+                    ->placeholder($this->getTraductionFormPlaceholder('file'))
+                    ->readOnly()
+                    ->columnSpanFull(),
                 Forms\Components\Select::make('table_name')
                     ->label($this->getTraductionFormLabel('table_name'))
                     ->placeholder($this->getTraductionFormPlaceholder('table_name'))
-                    ->options(function (Import $import) {
+                    ->options(function (Export $import) {
                         return $this->getTables($import->connectionTo, 'from');
                     })
                     ->columnSpan([
@@ -150,21 +151,17 @@ class EditImport extends EditRecord
                     ->columnSpan([
                         'md' => 2
                     ]),
-                static::getUploadFormField('file')
-                    ->afterStateUpdated(function (Set $set) {
-                        // $set('columns', []);
-                    }),
                 Forms\Components\Section::make($this->getTraduction('columns', 'restore', 'form',  'label'))
-                    ->visible(fn (Import $record) => $record->table_name && $record->file)
+                    ->visible(fn (Export $record) => $record->table_name)
                     ->description($this->getTraduction('columns', 'restore', 'form',  'description'))
                     ->collapsed()
-                    ->schema(function (Import $record) {
+                    ->schema(function (Export $record) {
                         return  [
                             Forms\Components\Repeater::make('columns')
                                 ->relationship('columns')
                                 ->hiddenLabel()
                                 ->schema(function () use ($record) {
-                                    return $this->getColumnsSchemaFileForm($record, $record->table_name);
+                                    return $this->getColumnsSchemaFileExportForm($record, $record->table_name);
                                 })
                                 ->columns(12)
                                 ->columnSpanFull()
@@ -172,9 +169,9 @@ class EditImport extends EditRecord
                     }),
                 Forms\Components\Section::make($this->getTraduction('filters', 'restore', 'form',  'label'))
                     ->description($this->getTraduction('filters', 'restore', 'form',  'description'))
-                    ->visible(fn (Import $record) => $record->table_name)
+                    ->visible(fn (Export $record) => $record->table_name)
                     ->collapsed()
-                    ->schema(function (Import $record) {
+                    ->schema(function (Export $record) {
                         return  [
                             Forms\Components\Repeater::make('filters')
                                 ->relationship('filters')

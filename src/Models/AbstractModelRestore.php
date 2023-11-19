@@ -17,6 +17,8 @@ class AbstractModelRestore extends Model
 {
     use HasFactory, HasUlids, SoftDeletes, HasSlug;
 
+     
+
      /**
      * @return SlugOptions
      */

@@ -7,18 +7,21 @@
 namespace Callcocam\DbRestore\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory; 
+use Callcocam\DbRestore\Models\AbstractModelRestore;
 use Callcocam\DbRestore\Models\Column;
 use Callcocam\DbRestore\Models\Connection;
+use Callcocam\DbRestore\Models\Filter;
 use Callcocam\DbRestore\Models\Model;
 
-class Import extends AbstractModelRestore
+class Export extends AbstractModelRestore
 {
     use HasFactory;
 
     protected $guarded = ['id'];
+ 
+    protected $table = 'restore_exports';
+   
 
-    protected $table = 'restore_imports';
-    
     public function connectionTo()
     {
         return $this->belongsTo(Connection::class , 'connection_id');
@@ -28,7 +31,7 @@ class Import extends AbstractModelRestore
     {
         return $this->belongsTo(Connection::class , 'connection_id');
     }
-
+    
     public function columns()
     {
         return $this->morphMany(Column::class, 'columnable');

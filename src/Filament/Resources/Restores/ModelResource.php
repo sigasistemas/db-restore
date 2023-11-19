@@ -28,6 +28,9 @@ class ModelResource extends Resource
     // protected static ?string $model = Model::class;
 
     protected static ?string $navigationIcon = 'fas-file-code';
+    
+
+    protected static ?int $navigationSort = 4;
 
     public static function getModel(): string
     {

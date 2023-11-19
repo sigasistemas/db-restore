@@ -8,8 +8,10 @@
 
 namespace Callcocam\DbRestore\Helpers;
 
+use Callcocam\DbRestore\Models\AbstractModelRestore;
 use Callcocam\DbRestore\Models\Connection;
 use Callcocam\DbRestore\Models\Restore;
+use Carbon\Carbon;
 use DateTime;
 use Illuminate\Bus\Batch;
 use Illuminate\Support\Facades\Bus;
@@ -79,7 +81,7 @@ class RestoreHelper
         })->toArray();
     }
 
-    public static function getFromDatabaseRows(Restore $restore, $from_table, $filters = null)
+    public static function getFromDatabaseRows(AbstractModelRestore $restore, $from_table, $filters = null)
     {
         $connection = $restore->connectionFrom;
 
@@ -370,6 +372,99 @@ class RestoreHelper
                 } else {
                     $data['status'] = $status;
                 }
+            }
+            $values[] = $data;
+        }
+        return $values;
+    }
+
+
+    public static function getExportValues($connectionName, $chunk, $column)
+    { 
+        $column_from = data_get($column, 'column_to');
+        $default_value = data_get($column, 'default_value');
+        $type = data_get($column, 'type');
+        $relation = data_get($column, 'relation');
+        if (!empty($default_value)) {
+            $data = $default_value;
+        } else { 
+            $val = data_get($chunk, $column_from);
+             
+            if ($relation) {
+                //Conexao da tabela de destino
+                // $connectionName = $connectionName;
+                //Nome da tabela de destino que vamos recuperar o dado
+                $tableName = $relation->table_name;
+                //Coluna da tabela de destino que vamos recuperar o dado
+                //Geraralmente é o id, mas tambem pode ser o campo slug ou o campo que foi salvo o id da tabela de origem
+                $columnToName = $relation->column_to;
+                //Valor da coluna da tabela de origem que vamos usar para recuperar o dado
+                $columnFromName = $relation->column_from;
+                //Nome da coluna que vamos recuperar o dado
+                $columnValue = $relation->column_value;
+                //Se o valor da coluna da tabela de origem for igual ao valor da coluna da tabela de destino
+                if (Cache::has(sprintf('_%s_%s', $column_from, $val))) {
+                    $val = Cache::get(sprintf('_%s_%s', $column_from, $val));
+                } else {
+                    $val = DB::connection($connectionName)
+                        ->table($tableName)->where($columnToName, $val)->value($columnValue);
+                    Cache::forever(sprintf('_%s_%s', $column_from, $val), $val);
+                }
+            }
+
+            switch ($type) {
+                case 'date': 
+                    return  Carbon::parse($val)->format('d/m/Y');
+
+                    break;
+                case 'datetime':
+                case 'timestamp':
+                    return  Carbon::parse($val)->format('d/m/Y H:i:s');
+
+                    break;
+                case 'time':
+                    return  Carbon::parse($val)->format('H:i:s');
+
+                    break;
+                case 'year':
+                    return  Carbon::parse($val)->format('Y');
+
+                    break;
+                case 'binary':
+                case 'boolean':
+                case 'char':
+                    return  $val;
+                    break;
+                case 'text':
+                    return  $val;
+
+                    break;
+                case 'json':
+                    $data = json_decode($val, true);
+                    return implode(',', $data);
+
+                    break;
+                case 'integer':
+                    return $val;
+
+                    break;
+                default:
+                    return $val;
+
+                    break;
+            }
+        }
+
+        return $data;
+    }
+
+    public static function getDataExportValues($rows, $to_columns, $connectionTo)
+    {
+        $values = [];
+        foreach ($rows as $row) { 
+            $data = [];
+            foreach ($to_columns as $key => $column) { 
+                $data[$key] = static::getExportValues($connectionTo, $row, $column);
             }
             $values[] = $data;
         }

@@ -25,6 +25,7 @@ class DbRestorePlugin implements Plugin
             Resources\Restores\RestoreResource::class,
             Resources\Restores\ModelResource::class,
             Resources\Restores\ImportResource::class,
+            Resources\Restores\ExportResource::class,
 
         ]);
     }

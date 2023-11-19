@@ -2,10 +2,23 @@
 
 // translations for Sigasistemas/DbRestore
 return [
+    'import' => [
+        'singular' => 'Importar',
+        'plural' => 'Importar',
+    ],
+    'export' => [
+        'singular' => 'Exportar',
+        'plural' => 'Exportar',
+        'action' => [
+            'export' => [
+                'label' => 'Exportar',
+            ],
+        ]
+    ],
     'restore' => [
         'singular' => 'Restaurar',
         'plural' => 'Restaurar',
-        'table'=>[
+        'table' => [
             'name' => [
                 'label' => 'Nome',
             ],
@@ -152,7 +165,7 @@ return [
             'relation_table_name' => [
                 'label' => 'Nome da tabela',
                 'placeholder' => 'Digite o nome da tabela',
-            ],           
+            ],
             'relation_name' => [
                 'label' => 'Nome da relação',
                 'placeholder' => 'Digite o nome da relação',

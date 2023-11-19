@@ -25,13 +25,33 @@ class ImportResource extends Resource
 {
     use HasTraduction, HasStatusColumn, HasDatesFormForTableColums;
 
-    protected static ?string $model = Import::class;
+    // protected static ?string $model = Import::class;
 
-    protected static ?string $navigationIcon = 'fas-folder-open';
+    protected static ?string $navigationIcon = 'fas-file-import'; 
+    
 
-    public static ?string $navigationGroup = 'Restores';
+    protected static ?int $navigationSort = 2;
 
+    
+    public static function getModel(): string
+    {
+        return config('db-restore.models.import', Import::class);
+    }
+    
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Restores';
+    }
 
+    public static function getPluralModelLabel(): string
+    {
+        return __('db-restore::db-restore.import.plural');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('db-restore::db-restore.import.singular');
+    }
 
     public static function table(Table $table): Table
     {

@@ -281,7 +281,22 @@ trait WithFormSchemas
                 ]);
         }
 
-        $columns[] = $this->getColumnToSelect($record->connection, $table_to);
+        $columns[] = $this->getColumnToSelect($record->connectionTo, $table_to)
+        ->columnSpan([
+            'md' => '2',
+        ]);
+
+        return  $this->getColumnsSchema($record, $columns, $relation);
+    }
+
+    protected function getColumnsSchemaFileExportForm($record, $table_to, $relation = 'relation')
+    {
+        $columns = [];
+
+        $columns[] = $this->getColumnToSelect($record->connectionTo, $table_to)
+        ->columnSpan([
+            'md' => '4',
+        ]);
 
         return  $this->getColumnsSchema($record, $columns, $relation);
     }
@@ -308,7 +323,10 @@ trait WithFormSchemas
         }
 
         if ($record->connectionTo) {
-            $columns[] =  $this->getColumnToSelect($record->connectionTo, $table_to);
+            $columns[] =  $this->getColumnToSelect($record->connectionTo, $table_to)
+                ->columnSpan([
+                    'md' => '2',
+                ]);
         }
         return  $$this->getColumnsSchema($record, $columns, $relation);
     }
@@ -446,9 +464,6 @@ trait WithFormSchemas
                 }
 
                 return [];
-            })
-            ->columnSpan([
-                'md' => '2',
-            ]);
+            });
     }
 }
