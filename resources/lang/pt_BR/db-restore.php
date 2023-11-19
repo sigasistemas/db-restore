@@ -5,6 +5,17 @@ return [
     'restore' => [
         'singular' => 'Restaurar',
         'plural' => 'Restaurar',
+        'table'=>[
+            'name' => [
+                'label' => 'Nome',
+            ],
+            'connection_id' => [
+                'label' => 'Conexão',
+            ],
+            'table_name' => [
+                'label' => 'Tabela',
+            ],
+        ],
         'form' => [
             'name' => [
                 'label' => 'Nome',
@@ -182,6 +193,31 @@ return [
                 'label' => 'Polimórfico',
                 'description' => 'Polimórfico',
             ],
+            'connection_id' => [
+                'label' => 'Conexão',
+                'placeholder' => 'Selecione a conexão',
+            ],
+            'file' => [
+                'label' => 'Arquivo',
+                'placeholder' => 'Digite o arquivo',
+            ],
+            'disk' => [
+                'label' => 'Disco',
+                'placeholder' => 'Digite o disco',
+            ],
+            'extension' => [
+                'label' => 'Extensão',
+                'placeholder' => 'Digite a extensão',
+            ],
+            'delimiter' => [
+                'label' => 'Delimitador',
+                'placeholder' => 'Digite o delimitador',
+            ],
+            'table_name' => [
+                'label' => 'Tabela',
+                'placeholder' => 'Digite a tabela',
+            ],
+
 
         ],
     ],

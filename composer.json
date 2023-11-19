@@ -4,7 +4,18 @@
     "keywords": [
         "sigasistemas",
         "laravel",
-        "db-restore"
+        "db-restore",
+        "db",
+        "restore",
+        "backup",
+        "backup-manager",
+        "backup-manager-laravel",
+        "filament",
+        "filament-admin",
+        "filament-admin-laravel",
+        "filament-admin-laravel-package",
+        "filament-admin-laravel-package-db-restore",
+        "filament-plugin"
     ],
     "homepage": "https://github.com/sigasistemas/db-restore",
     "support": {
@@ -14,8 +25,8 @@
     "license": "MIT",
     "authors": [
         {
-            "name": "",
-            "email": "",
+            "name": "Claudio Campos",
+            "email": "callcocam@gmail.com",
             "role": "Developer"
         }
     ],
@@ -27,7 +38,8 @@
         "leandrocfe/filament-ptbr-form-fields": "^3.0",
         "owenvoke/blade-fontawesome": "^2.4",
         "doctrine/dbal": "^3.7",
-        "callcocam/tall-sluggable": "dev-main"
+        "callcocam/tall-sluggable": "dev-main",
+        "phpoffice/phpspreadsheet": "^1.29"
     },
     "require-dev": {
         "laravel/pint": "^1.0",

@@ -184,7 +184,7 @@ class RestoreHelper
                             $status = data_get($chunk, $column_from, $default_value);
                             return  $status  ? 'published' : 'draft';
                         } else {
-                            return  data_get($chunk, $column_from, $default_value);
+                            return  (int) data_get($chunk, $column_from, $default_value);
                         }
 
                         break;
@@ -328,7 +328,8 @@ class RestoreHelper
                     $data[$key] = DB::connection($connectionTo)->table(config('db-restore.tables.user', 'users'))
                         ->where(config('db-restore.oldId', 'old_id'), data_get($row, 'user_id'))->value('id');
                 } else {
-                    $data[$key] = static::getValues($connectionTo, $row, $column);
+                    $value = static::getValues($connectionTo, $row, $column);
+                    $data[$key] =  $value == 'NULL' ? null : $value;
                 }
             }
 
@@ -337,7 +338,9 @@ class RestoreHelper
             //Se existir, significa que a tabela de origem usa o id como chave primaria o ulid ou uuid
             if (!array_key_exists('id', $to_columns)) {
                 $data['id'] = strtolower((string) Str::ulid());
-                $data[config('db-restore.oldId', 'old_id')] = data_get($row, 'id');
+                if (data_get($row, 'id')) {
+                    $data[config('db-restore.oldId', 'old_id')] = data_get($row, 'id');
+                }
             } else {
                 //Se estiver vazio, cria um ulid para a coluna id
                 if (empty($data['id'])) {
@@ -358,6 +361,14 @@ class RestoreHelper
                     } else {
                         $data[sprintf('%sable_id', $tableName)] = static::getTenantId($row);
                     }
+                }
+            }
+            if (isset($data['status'])) {
+                $status = data_get($row, 'status');
+                if (!in_array($data['status'], ['published', 'draft'])) {
+                    $data['status'] = (int)$status ? 'published' : 'draft';
+                } else {
+                    $data['status'] = $status;
                 }
             }
             $values[] = $data;

@@ -24,6 +24,7 @@ class DbRestorePlugin implements Plugin
         $panel->resources([
             Resources\Restores\RestoreResource::class,
             Resources\Restores\ModelResource::class,
+            Resources\Restores\ImportResource::class,
 
         ]);
     }

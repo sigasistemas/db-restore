@@ -1,12 +1,14 @@
 <?php
+
 /**
-* Created by Claudio Campos.
-* User: callcocam@gmail.com, contato@sigasmart.com.br
-* https://www.sigasmart.com.br
-*/
+ * Created by Claudio Campos.
+ * User: callcocam@gmail.com, contato@sigasmart.com.br
+ * https://www.sigasmart.com.br
+ */
+
 namespace Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource\Pages;
 
-use Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource; 
+use Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource;
 use Callcocam\DbRestore\Models\Restore;
 use Callcocam\DbRestore\Traits\HasDatesFormForTableColums;
 use Callcocam\DbRestore\Traits\HasStatusColumn;
@@ -15,8 +17,8 @@ use Callcocam\DbRestore\Traits\WithColumns;
 use Callcocam\DbRestore\Traits\WithFormSchemas;
 use Filament\Actions;
 use Filament\Forms\Form;
-use Filament\Forms; 
-use Filament\Resources\Pages\EditRecord; 
+use Filament\Forms;
+use Filament\Resources\Pages\EditRecord;
 
 class EditRestore extends EditRecord
 {
@@ -106,6 +108,7 @@ class EditRestore extends EditRecord
                     ]),
                 Forms\Components\Section::make($this->getTraduction('columns', 'restore', 'form',  'label'))
                     ->description($this->getTraduction('columns', 'restore', 'form',  'description'))
+                    ->visible(fn (Restore $record) => $record->table_to && $record->table_from)
                     ->collapsed()
                     ->schema(function (Restore $record) {
                         return  [
@@ -121,6 +124,7 @@ class EditRestore extends EditRecord
                     }),
                 Forms\Components\Section::make($this->getTraduction('filters', 'restore', 'form',  'label'))
                     ->description($this->getTraduction('filters', 'restore', 'form',  'description'))
+                    ->visible(fn (Restore $record) => $record->table_to)
                     ->collapsed()
                     ->schema(function (Restore $record) {
                         return  [

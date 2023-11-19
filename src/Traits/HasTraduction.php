@@ -24,4 +24,9 @@ trait HasTraduction
     {
         return __(sprintf('db-restore::db-restore.%s.form.%s.placeholder', $model, $column));
     }
+
+    public static function getTraductionTableLabel($column, $model = 'restore', $default = null)
+    {
+        return __(sprintf('db-restore::db-restore.%s.table.%s.label', $model, $column));
+    }
 }
