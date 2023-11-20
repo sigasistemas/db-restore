@@ -7,7 +7,7 @@
  */
 
 namespace Callcocam\DbRestore\Jobs;
- 
+
 use Callcocam\DbRestore\Helpers\RestoreHelper;
 use Callcocam\DbRestore\Models\Import;
 use Illuminate\Bus\Batchable;
@@ -26,7 +26,7 @@ class DbRestoreFileJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public Import $record, public $rows, public $to_columns)
+    public function __construct(public Import $record, public $rows, public $to_columns, public $children = null)
     {
         //
     }
@@ -36,14 +36,24 @@ class DbRestoreFileJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $fromConnection = RestoreHelper::getConnectionCloneOptions($this->record->connection);
+        $fromConnection = RestoreHelper::getConnectionCloneOptions($this->record->connectionTo);
 
         $model = DB::connection($fromConnection)
             ->table($this->record->table_name);
 
-        $values = RestoreHelper::getDataValues($this->rows, $this->to_columns, $fromConnection);
- 
+        $values = RestoreHelper::getDataValues($this->rows, $this->to_columns, $fromConnection, null, null, null, $this->children);
 
-        $model->insert($values);
+        if ($this->children) {
+            foreach ($values as $value) {
+                $childrens = data_get($value, 'childrens');
+                unset($value['childrens']);
+                $model->insertGetId($value);
+                if ($childrens) { 
+                    DB::connection($fromConnection)->table($this->children->table_from)->insert($childrens);
+                }
+            }
+        } else {
+            $model->insert($values);
+        }
     }
 }

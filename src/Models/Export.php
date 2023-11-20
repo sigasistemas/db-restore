@@ -52,4 +52,9 @@ class Export extends AbstractModelRestore
     {
         return $this->morphMany(Ordering::class, 'orderingable')->orderBy('ordering', 'ASC');
     }
+
+    public function childrens()
+    {
+        return $this->morphMany(Children::class, 'childrenable');
+    }
 }

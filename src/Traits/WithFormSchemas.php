@@ -8,10 +8,19 @@
 
 namespace Callcocam\DbRestore\Traits;
 
+use Callcocam\DbRestore\Helpers\RestoreHelper;
+use Callcocam\DbRestore\Models\Column;
+use Callcocam\DbRestore\Models\Connection;
 use Filament\Forms;
 use Filament\Forms\Components\Group;
+use Filament\Forms\Set;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Filament\Forms\Components\Actions\Action;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Illuminate\Support\Facades\DB;
 
 trait WithFormSchemas
 {
@@ -259,7 +268,6 @@ trait WithFormSchemas
             $columns[] = Forms\Components\Select::make('column_from')
                 ->label($this->getTraductionFormLabel('column_from'))
                 ->placeholder($this->getTraductionFormPlaceholder('column_from'))
-                ->required()
                 ->options(function () use ($headers) {
                     return $headers;
                 })
@@ -275,7 +283,41 @@ trait WithFormSchemas
 
         return  $this->getColumnsSchema($record, $columns, $relation);
     }
+    protected function getColumnsSchemaFileChildrensForm($record, $table_to, $relation = 'relation')
+    {
+        $columns = [];
 
+        if (Storage::exists($record->file)) {
+
+
+            $headers = RestoreHelper::getFromColumnsFileOptions($record);
+
+
+            $headers = array_filter($headers);
+
+            $columns[] = Forms\Components\Select::make('column_from')
+                ->label($this->getTraductionFormLabel('column_from'))
+                ->placeholder($this->getTraductionFormPlaceholder('column_from'))
+                ->options(function () use ($headers) {
+                    return $headers;
+                })
+                ->columnSpan([
+                    'md' => '2',
+                ]);
+        }
+
+        $columns[] = Forms\Components\Select::make('column_to')
+            ->label($this->getTraductionFormLabel('column_to'))
+            ->placeholder($this->getTraductionFormPlaceholder('column_to'))
+            ->required()
+            ->options(function () use ($record, $table_to) {  
+                return DB::connection(RestoreHelper::getConnectionCloneOptions($record->connectionTo))->table($table_to)->pluck('name', 'id')->toArray();
+            })->columnSpan([
+                'md' => '2',
+            ]);
+
+        return  $this->getColumnsSchema($record, $columns, $relation);
+    }
     protected function getColumnsSchemaFileExportForm($record, $table_to, $relation = 'relation')
     {
         $columns = [];
@@ -359,6 +401,34 @@ trait WithFormSchemas
         $columns[] = Forms\Components\TextInput::make('default_value')
             ->label($this->getTraductionFormLabel('default_value'))
             ->placeholder($this->getTraductionFormPlaceholder('default_value'))
+            ->hintAction(
+                Action::make('searchDefaultValue')
+                    ->fillForm(function (Column $column) {
+                        if ($model = $column->defaults) {
+                            return $model->toArray();
+                        }
+                        return [];
+                    })
+                    ->visible(fn (Column $column) => $column->exists)
+                    ->label($this->getTraductionFormLabel('searchDefaultValue'))
+                    ->icon('fas-search')
+                    ->form(fn (Column $column) => $this->getsearchDefaultValueSchemaForm($column))
+
+                    ->action(function ($data, Column $column, Set $set) {
+                        if ($model = $column->defaults) {
+                            $model->update($data);
+                            $column->update([
+                                'default_value' =>  data_get($data, 'column_value')
+                            ]);
+                        } else {
+                            $model = $column->defaults()->create($data);
+                            $column->update([
+                                'default_value' =>   data_get($data, 'column_value')
+                            ]);
+                        }
+                        $set('default_value', data_get($data, 'column_value'));
+                    })
+            )
             ->columnSpan([
                 'md' => '3',
             ]);
@@ -525,5 +595,110 @@ trait WithFormSchemas
 
                 return [];
             });
+    }
+
+    protected function getsearchDefaultValueSchemaForm($column)
+    {
+
+        return [
+            Section::make()
+                ->schema(function () { 
+                    return [
+                        Forms\Components\Select::make('connection_id')
+                            ->label($this->getTraductionFormLabel('connection_id'))
+                            ->placeholder($this->getTraductionFormPlaceholder('connection_id'))
+                            ->live()
+                            ->afterStateUpdated(function (string $state) {
+                                if ($connectionTo = Connection::find($state)) {
+                                    Cache::put($state, $connectionTo);
+                                }
+                                return $state;
+                            })
+                            ->required()
+                            ->options(Connection::query()->pluck('name', 'id')->toArray())
+                            ->columnSpan([
+                                'md' => '3',
+                            ]),
+                        Forms\Components\Select::make('table_name')
+                            ->label($this->getTraductionFormLabel('table_name'))
+                            ->placeholder($this->getTraductionFormPlaceholder('table_name'))
+                            ->live()
+                            ->required()
+                            ->options(function (Get $get) {
+                                $connectionKey = $get('connection_id');
+                                if ($connectionTo = Cache::rememberForever($connectionKey, function () use ($connectionKey) {
+                                    return Connection::find($connectionKey);
+                                })) {
+                                    return $this->getTables($connectionTo);
+                                }
+
+                                return [];
+                            })
+                            ->columnSpan([
+                                'md' => '3',
+                            ]),
+                        Forms\Components\Select::make('column_key')
+                            ->label($this->getTraductionFormLabel('column_key'))
+                            ->placeholder($this->getTraductionFormPlaceholder('column_key'))
+                            ->live()
+                            ->required()
+                            ->options(function (Get $get) {
+                                $connectionKey = $get('connection_id');
+                                if ($connectionTo = Cache::rememberForever($connectionKey, function () use ($connectionKey) {
+                                    return Connection::find($connectionKey);
+                                })) {
+                                    return $this->getColumns($connectionTo, $get('table_name'), 'to');
+                                }
+
+                                return [];
+                            })
+                            ->columnSpan([
+                                'md' => '3',
+                            ]),
+                        Forms\Components\Select::make('column_label')
+                            ->label($this->getTraductionFormLabel('column_label'))
+                            ->placeholder($this->getTraductionFormPlaceholder('column_label'))
+                            ->live()
+                            ->required()
+                            ->options(function (Get $get) {
+                                $connectionKey = $get('connection_id');
+                                if ($connectionTo = Cache::rememberForever($connectionKey, function () use ($connectionKey) {
+                                    return Connection::find($connectionKey);
+                                })) {
+                                    return $this->getColumns($connectionTo, $get('table_name'), 'to');
+                                }
+
+                                return [];
+                            })
+                            ->columnSpan([
+                                'md' => '3',
+                            ]),
+                        Forms\Components\Select::make('column_value')
+                            ->label($this->getTraductionFormLabel('column_value'))
+                            ->placeholder($this->getTraductionFormPlaceholder('column_value'))
+                            ->visible(function (Get $get) {
+                                return $get('column_label') && $get('column_key');
+                            })
+                            ->searchable()
+                            ->required()
+                            ->options(function (Get $get) {
+                                $connectionKey = $get('connection_id');
+                                if ($connectionTo = Cache::rememberForever($connectionKey, function () use ($connectionKey) {
+                                    return Connection::find($connectionKey);
+                                })) {
+                                    return DB::connection(RestoreHelper::getConnectionCloneOptions($connectionTo))
+                                        ->table($get('table_name'))
+                                        ->whereNotNull($get('column_label'))
+                                        ->pluck($get('column_label'), $get('column_key'))->toArray();
+                                }
+
+                                return [];
+                            })
+                            ->columnSpanFull()
+
+                    ];
+                })
+                ->columns(12)
+        ];
     }
 }

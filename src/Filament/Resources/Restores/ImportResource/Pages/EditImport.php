@@ -11,6 +11,9 @@ namespace Callcocam\DbRestore\Filament\Resources\Restores\ImportResource\Pages;
 use Callcocam\DbRestore\Filament\Resources\Restores\ImportResource;
 use Callcocam\DbRestore\Models\Import;
 use Callcocam\DbRestore\Helpers\RestoreHelper;
+use Callcocam\DbRestore\Models\Children;
+use Callcocam\DbRestore\Models\Column;
+use Callcocam\DbRestore\Models\Connection;
 use Callcocam\DbRestore\Traits\HasStatusColumn;
 use Callcocam\DbRestore\Traits\HasTraduction;
 use Callcocam\DbRestore\Traits\HasUploadFormField;
@@ -19,6 +22,7 @@ use Callcocam\DbRestore\Traits\WithFormSchemas;
 use Filament\Actions;
 use Filament\Forms\Form;
 use Filament\Forms;
+use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Bus\Batch;
@@ -41,14 +45,14 @@ class EditImport extends EditRecord
                 ->color('success')
                 ->action(function (Import $record) {
                     $columns = $record->columns;
-
+                    $childrens = $record->childrens;
+ 
                     $from_table = $record->table_name;
-
                     if (Storage::exists($record->file)) {
 
                         $to_columns = RestoreHelper::getColumsSchema($columns, $from_table, 'column_to');
 
-                        $sheetData = Cache::rememberForever("{$record->file}-column1", function () use ($record) {
+                        $sheetData = Cache::rememberForever("{$record->file}-column", function () use ($record) {
                             $inputFileName = Storage::path($record->file);
 
                             $testAgainstFormats = [
@@ -63,16 +67,19 @@ class EditImport extends EditRecord
                         unset($sheetData[1]);
 
                         $chunks = array_chunk($sheetData, 1000);
-
+                        
+                        $children=null;
+                        if($childrens){
+                            $children = $childrens->first();
+                        } 
+                        
                         $batch =  Bus::batch([])->then(function (Batch $batch) use ($record) {
                         })->name($record->name)->dispatch();
 
                         $record->table_to = $from_table;
-
-                        RestoreHelper::beforeRemoveFilters($record);
-
+                      
                         foreach ($chunks as $chunk) {
-                            $batch->add(new \Callcocam\DbRestore\Jobs\DbRestoreFileJob($record, $chunk, $to_columns));
+                            $batch->add(new \Callcocam\DbRestore\Jobs\DbRestoreFileJob($record, $chunk, $to_columns, $children));
                         }
                     }
                 }),
@@ -172,7 +179,7 @@ class EditImport extends EditRecord
                     }),
                 Forms\Components\Section::make($this->getTraduction('filters', 'restore', 'form',  'label'))
                     ->description($this->getTraduction('filters', 'restore', 'form',  'description'))
-                    ->visible(fn (Import $record) => $record->table_name)
+                    ->visible(fn (Import $record) => $record->table_name && $record->file)
                     ->collapsed()
                     ->schema(function (Import $record) {
                         return  [
@@ -188,7 +195,7 @@ class EditImport extends EditRecord
                     }),
                 Forms\Components\Section::make($this->getTraduction('orderings', 'restore', 'form',  'label'))
                     ->description($this->getTraduction('orderings', 'restore', 'form',  'description'))
-                    ->visible(fn (Import $record) => $record->table_name)
+                    ->visible(fn (Import $record) => $record->table_name && $record->file)
                     ->collapsed()
                     ->schema(function (Import $record) {
                         return  [
@@ -197,6 +204,104 @@ class EditImport extends EditRecord
                                 ->hiddenLabel()
                                 ->schema(function () use ($record) {
                                     return $this->getOrderingsSchemaForm($record->connectionTo, $record->table_name);
+                                })
+                                ->columns(12)
+                                ->columnSpanFull()
+                        ];
+                    }),
+                Forms\Components\Section::make($this->getTraduction('childrens', 'restore', 'form',  'label'))
+                    ->description($this->getTraduction('childrens', 'restore', 'form',  'description'))
+                    ->visible(fn (Import $record) => $record->table_name && $record->file)
+                    ->collapsed()
+                    ->schema(function (Import $record) {
+                        return  [
+                            Forms\Components\Repeater::make('childrens')
+                                ->relationship('childrens')
+                                ->hiddenLabel()
+                                ->maxItems(1)
+                                ->schema(function () use ($record) {
+                                    return [
+                                        Forms\Components\TextInput::make('name')
+                                            ->label($this->getTraductionFormLabel('name'))
+                                            ->placeholder($this->getTraductionFormPlaceholder('name'))
+                                            ->columnSpan([
+                                                'md' => 2
+                                            ])->required(),
+                                        Forms\Components\Select::make('table_from')
+                                            ->label($this->getTraductionFormLabel('table_from', 'import'))
+                                            ->placeholder($this->getTraductionFormPlaceholder('table_from', 'import'))
+                                            ->options(function () use ($record) {
+
+                                                if ($connectionFrom =  $record->connectionFrom) {
+                                                    return $this->getTables($connectionFrom);
+                                                }
+
+                                                return [];
+                                            })
+                                            ->columnSpan([
+                                                'md' => 2
+                                            ])->required(),
+
+                                        Forms\Components\Select::make('join_from_column')
+                                            ->label($this->getTraductionFormLabel('join_from_column', 'import'))
+                                            ->placeholder($this->getTraductionFormPlaceholder('join_from_column', 'import'))
+                                            ->options(function (Get $get) use ($record) {
+                                                $table = $get('table_from');
+                                                if ($connectionTo =  $record->connectionTo) {
+                                                    return $this->getColumns($connectionTo, $table, 'to');
+                                                }
+
+                                                return [];
+                                            })
+                                            ->columnSpan([
+                                                'md' => 3
+                                            ])->required(),
+                                        Forms\Components\Select::make('join_to_column')
+                                            ->label($this->getTraductionFormLabel('join_to_column', 'import'))
+                                            ->placeholder($this->getTraductionFormPlaceholder('join_to_column', 'import'))
+                                            ->options(function () use ($record) {
+                                                $table = $record->table_name;
+                                                if ($connectionTo =  $record->connectionTo) {
+                                                    return $this->getColumns($connectionTo, $table, 'to');
+                                                }
+
+                                                return [];
+                                            })
+                                            ->columnSpan([
+                                                'md' => 3
+                                            ])->required(),
+                                        Forms\Components\Select::make('table_to')
+                                            ->label($this->getTraductionFormLabel('table_to', 'import'))
+                                            ->live()
+                                            ->placeholder($this->getTraductionFormPlaceholder('table_to', 'import'))
+                                            ->options(function () use ($record) {
+
+                                                if ($connectionTo =  $record->connectionTo) {
+                                                    return $this->getTables($connectionTo);
+                                                }
+
+                                                return [];
+                                            })
+                                            ->columnSpan([
+                                                'md' => 2
+                                            ])->required(),
+                                        Forms\Components\Section::make($this->getTraduction('columns', 'restore', 'form',  'label'))
+                                            ->description($this->getTraduction('columns', 'restore', 'form',  'description'))
+                                            ->visible(fn (Children $record) => $record->table_to)
+                                            ->collapsed()
+                                            ->schema(function (Children $children) use ($record) {
+                                                return  [
+                                                    Forms\Components\Repeater::make('columns')
+                                                        ->relationship('columns')
+                                                        ->hiddenLabel()
+                                                        ->schema(function () use ($record, $children) {
+                                                            return $this->getColumnsSchemaFileChildrensForm($record,   $children->table_to);
+                                                        })
+                                                        ->columns(12)
+                                                        ->columnSpanFull()
+                                                ];
+                                            }),
+                                    ];
                                 })
                                 ->columns(12)
                                 ->columnSpanFull()

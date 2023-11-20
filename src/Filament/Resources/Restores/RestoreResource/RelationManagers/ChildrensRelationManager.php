@@ -63,6 +63,8 @@ class ChildrensRelationManager extends RelationManager
     protected function getChildrensSchemaForm($record)
     {
 
+        $ownerRecord = $record;
+
         return [
             Forms\Components\TextInput::make('name')
                 ->label($this->getTraductionFormLabel('name'))
@@ -72,7 +74,7 @@ class ChildrensRelationManager extends RelationManager
                     'md' => '8'
                 ]),
             // 'one-to-one', 'one-to-many', 'one-to-many-inverse','polymorphic'
-            Forms\Components\Select::make('type')
+            Forms\Components\Select::make('relation_type')
                 ->label($this->getTraductionFormLabel('type'))
                 ->placeholder($this->getTraductionFormPlaceholder('type'))
                 ->required()
@@ -90,9 +92,9 @@ class ChildrensRelationManager extends RelationManager
                 ->placeholder($this->getTraductionFormPlaceholder('table_from'))
                 ->required()
                 ->live()
-                ->options(function () use ($record) {
-                    if ($record->connectionFrom)
-                        return $this->getTables($record->connectionFrom);
+                ->options(function () use ($ownerRecord) {
+                    if ($ownerRecord->connectionFrom)
+                        return $this->getTables($ownerRecord->connectionFrom);
                     return [];
                 })
                 ->columnSpan([
@@ -102,9 +104,9 @@ class ChildrensRelationManager extends RelationManager
                 ->label($this->getTraductionFormLabel('join_from_column'))
                 ->placeholder($this->getTraductionFormPlaceholder('join_from_column'))
                 ->required()
-                ->options(function (Get $get) use ($record) {
-                    if ($record->connectionFrom)
-                        return $this->getColumns($record->connectionFrom, $get('table_from'));
+                ->options(function (Get $get) use ($ownerRecord) {
+                    if ($ownerRecord->connectionFrom)
+                        return $this->getColumns($ownerRecord->connectionFrom, $get('table_from'));
                     return [];
                 })
                 ->columnSpan([
@@ -115,9 +117,9 @@ class ChildrensRelationManager extends RelationManager
                 ->placeholder($this->getTraductionFormPlaceholder('table_to'))
                 ->required()
                 ->live()
-                ->options(function () use ($record) {
-                    if ($record->connectionTo)
-                        return $this->getTables($record->connectionTo);
+                ->options(function () use ($ownerRecord) {
+                    if ($ownerRecord->connectionTo)
+                        return $this->getTables($ownerRecord->connectionTo);
                     return [];
                 })
                 ->columnSpan([
@@ -127,69 +129,76 @@ class ChildrensRelationManager extends RelationManager
                 ->label($this->getTraductionFormLabel('join_to_column'))
                 ->placeholder($this->getTraductionFormPlaceholder('join_to_column'))
                 ->required()
-                ->options(function (Get $get) use ($record) {
-                    if ($record->connectionTo)
-                        return $this->getColumns($record->connectionTo, $get('table_to'));
+                ->options(function (Get $get) use ($ownerRecord) {
+                    if ($ownerRecord->connectionTo)
+                        return $this->getColumns($ownerRecord->connectionTo, $get('table_to'));
                     return [];
                 })
                 ->columnSpan([
                     'md' => '3'
                 ]),
-            Forms\Components\Section::make($this->getTraduction('columns', 'restore', 'form',  'label'))
-                ->description($this->getTraduction('columns', 'restore', 'form', 'description'))
-                ->visible(fn (Children $record) => $record->restore->table_from && $record->restore->table_to)
-                ->collapsed()
-                ->schema(function (Children | null $record = null) {
-                    if (!$record) {
-                        return [];
-                    }
-                    return  [
-                        Forms\Components\Repeater::make('columns')
-                            ->relationship('columns')
-                            ->hiddenLabel()
-                            ->schema(function () use ($record) {
-                                return $this->getColumnsSchemaForm($record->restore, $record->table_from, $record->table_to);
-                            })
-                            ->columns(12)
-                            ->columnSpanFull()
-                    ];
-                }),
-            Forms\Components\Section::make($this->getTraduction('filters', 'restore', 'form',  'label'))
-                ->description($this->getTraduction('filters', 'restore', 'form',  'description'))
-                ->visible(fn (Children $record) => $record->restore->table_from)
-                ->collapsed()
-                ->schema(function (Children | null $record = null) {
-                    if (!$record) {
-                        return [];
-                    }
-                    return  [
-                        Forms\Components\Repeater::make('filters')
-                            ->relationship('filters')
-                            ->hiddenLabel()
-                            ->schema(function () use ($record) {
-                                return $this->getFiltersSchemaForm($record->restore->connectionFrom, $record->restore->table_from);
-                            })
-                            ->columns(12)
-                            ->columnSpanFull()
-                    ];
-                }),
+            Forms\Components\Section::make()
+                ->visible(fn (Children | null $record = null) => $record)
+                ->schema([
+                    Forms\Components\Section::make($this->getTraduction('columns', 'restore', 'form',  'label'))
+                        ->description($this->getTraduction('columns', 'restore', 'form', 'description'))
+                        ->visible($ownerRecord->table_from && $ownerRecord->table_to)
+                        ->collapsed()
+                        ->schema(function (Children | null $record = null) use ($ownerRecord) { 
+                            if (!$record) {
+                                return [];
+                            }
+                            return  [
+                                Forms\Components\Repeater::make('columns')
+                                    ->relationship('columns')
+                                    ->hiddenLabel()
+                                    ->schema(function () use ($ownerRecord, $record)  {
+                                        return $this->getColumnsSchemaForm($ownerRecord, $record->table_from, $record->table_to);
+                                    })
+                                    ->columns(12)
+                                    ->columnSpanFull()
+                            ];
+                        }),
+                    Forms\Components\Section::make($this->getTraduction('filters', 'restore', 'form',  'label'))
+                        ->description($this->getTraduction('filters', 'restore', 'form',  'description'))
+                        ->visible($ownerRecord->table_from)
+                        ->collapsed()
+                        ->schema(function (Children | null $record = null) use ($ownerRecord) {
+                            if (!$record) {
+                                return [];
+                            }
+                            return  [
+                                Forms\Components\Repeater::make('filters')
+                                    ->relationship('filters')
+                                    ->hiddenLabel()
+                                    ->schema(function () use ($ownerRecord) {
+                                        return $this->getFiltersSchemaForm($ownerRecord->connectionFrom, $ownerRecord->table_from);
+                                    })
+                                    ->columns(12)
+                                    ->columnSpanFull()
+                            ];
+                        }),
 
-            Forms\Components\Section::make($this->getTraduction('orderings', 'restore', 'form',  'label'))
-                ->description($this->getTraduction('orderings', 'restore', 'form',  'description'))
-                ->visible(fn (Children $record) => $record->restore->table_from)
-                ->collapsed()
-                ->schema(function (Children $record) {
-                    return  [
-                        Forms\Components\Repeater::make('orderings')
-                            ->relationship('orderings')
-                            ->hiddenLabel()
-                            ->schema(function () use ($record) {
-                                return $this->getOrderingsSchemaForm($record->restore->connectionFrom, $record->restore->table_from);
-                            })
-                            ->columns(12)
-                            ->columnSpanFull()
-                    ];
-                }),
+                    Forms\Components\Section::make($this->getTraduction('orderings', 'restore', 'form',  'label'))
+                        ->description($this->getTraduction('orderings', 'restore', 'form',  'description'))
+                        ->visible($ownerRecord->table_from)
+                        ->collapsed()
+                        ->schema(function (Children | null $record = null) use ($ownerRecord) {
+                            if (!$record) {
+                                return [];
+                            }
+                            return  [
+                                Forms\Components\Repeater::make('orderings')
+                                    ->relationship('orderings')
+                                    ->hiddenLabel()
+                                    ->schema(function () use ($ownerRecord) {
+                                        return $this->getOrderingsSchemaForm($ownerRecord->connectionFrom, $ownerRecord->table_from);
+                                    })
+                                    ->columns(12)
+                                    ->columnSpanFull()
+                            ];
+                        })
+                ]),
 
         ];
     }

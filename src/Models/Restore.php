@@ -55,6 +55,6 @@ class Restore extends AbstractModelRestore
 
     public function childrens()
     {
-        return $this->hasMany(Children::class);
+        return $this->morphMany(Children::class, 'childrenable');
     }
 }

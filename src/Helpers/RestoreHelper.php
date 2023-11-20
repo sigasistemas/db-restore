@@ -9,8 +9,7 @@
 namespace Callcocam\DbRestore\Helpers;
 
 use Callcocam\DbRestore\Models\AbstractModelRestore;
-use Callcocam\DbRestore\Models\Connection;
-use Callcocam\DbRestore\Models\Restore;
+use Callcocam\DbRestore\Models\Connection; 
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Bus\Batch;
@@ -18,6 +17,7 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\Finder\Finder;
 
@@ -153,6 +153,26 @@ class RestoreHelper
         $rows = $query->get();
 
         return $rows->toArray();
+    }
+
+    public static function getFromColumnsFileOptions($record)
+    {
+        return Cache::rememberForever("{$record->file}-header", function () use ($record) {
+            $inputFileName = Storage::path($record->file);
+
+            $testAgainstFormats = [
+                \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLS,
+                \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLSX,
+                \PhpOffice\PhpSpreadsheet\IOFactory::READER_CSV,
+            ];
+
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($inputFileName, 0, $testAgainstFormats);
+            $headers = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+            if (isset($headers[1])) {
+                return $headers[1];
+            }
+            return [];
+        });
     }
 
     public static function getValues($connectionName, $chunk, $column)
@@ -327,7 +347,7 @@ class RestoreHelper
         }
     }
 
-    public static function getDataValues($rows, $to_columns, $connectionTo, $tableName = null, $type = null, $restore = null)
+    public static function getDataValues($rows, $to_columns, $connectionTo, $tableName = null, $type = null, $restore = null, $children = null)
     {
         $values = [];
         foreach ($rows as $row) {
@@ -381,6 +401,20 @@ class RestoreHelper
                 } else {
                     $data['status'] = $status;
                 }
+            }
+            if ($children) {
+                $childrenDatas = [];
+                $columns = $children->columns;
+                foreach ($columns as $column) {
+                    $childrenData['id'] = strtolower((string) Str::ulid());
+                    $childrenData['field_id'] =   $column->id;
+                    $childrenData['description'] = data_get($row, $column->column_from);
+                    $childrenData['created_at'] = now();
+                    $childrenData['updated_at'] = now();
+                    $childrenData[$children->join_from_column] = data_get($data, $children->join_to_column);
+                    $childrenDatas[] = $childrenData;
+                } 
+                $data['childrens'] = $childrenDatas;
             }
             $values[] = $data;
         }

@@ -5,6 +5,24 @@ return [
     'import' => [
         'singular' => 'Importar',
         'plural' => 'Importar',
+        'form'=>[
+            'table_from'=>[
+                'label'=>'Tabela de destino',
+                'placeholder'=>'Selecione'
+            ],
+            'table_to'=>[
+                'label'=>'Tabela de campos',
+                'placeholder'=>'Selecione'
+            ],
+            'join_from_column'=>[
+                'label'=>'Coluna de junção para',
+                'placeholder'=>'Selecione'
+            ],
+            'join_to_column'=>[
+                'label'=>'Coluna de junção de',
+                'placeholder'=>'Selecione'
+            ]
+        ]
     ],
     'export' => [
         'singular' => 'Exportar',
@@ -61,6 +79,25 @@ return [
             'default_value' => [
                 'label' => 'Valor padrão',
                 'placeholder' => 'Digite o valor padrão',
+            ],
+            'searchDefaultValue' => [
+                'label' => 'Buscar valor padrão', 
+            ],
+            'connection' => [
+                'label' => 'Conexão',
+                'placeholder' => 'Selecione a conexão',
+            ],
+            'column_key' => [
+                'label' => 'Coluna chave',
+                'placeholder' => 'Selecione a coluna chave',
+            ],
+            'column_label' => [
+                'label' => 'Rotulo',
+                'placeholder' => 'Selecione o rotulo',
+            ],
+            'column_value' => [
+                'label' => 'Valor',
+                'placeholder' => 'Selecione o valor',
             ],
             'description' => [
                 'label' => 'Descrição',

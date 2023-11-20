@@ -17,7 +17,7 @@ class Column extends AbstractModelRestore
 
     protected $table = 'restore_columns';
 
-    protected $with = ['relation'];
+    protected $with = ['relation', 'defaults'];
 
     public function columnable()
     {
@@ -27,6 +27,11 @@ class Column extends AbstractModelRestore
     public function relation()
     {
         return $this->belongsTo(Relation::class);
+    }
+
+    public function defaults()
+    {
+        return $this->morphOne(Defalt::class, 'defaultable');
     }
 
     protected function slugTo()

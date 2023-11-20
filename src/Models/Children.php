@@ -18,9 +18,14 @@ class Children extends AbstractModelRestore
 
     protected $with = ['restore', 'columns', 'filters', 'orderings'];
 
+    public function childrenable()
+    {
+        return $this->morphTo();
+    }
+
     public function restore()
     {
-        return $this->belongsTo(Restore::class);
+        return $this->belongsTo(Restore::class, 'chidrenable_id');
     }
 
     public function columns()
