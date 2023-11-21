@@ -24,12 +24,12 @@ class SelectColumnField extends Select
     use HasTraduction;
 
 
-    public static function makeFromOptions(string $name, AbstractModelRestore | null $record = null, $parent = null): static
+    public static function makeFromOptions(string $name, AbstractModelRestore | null $record = null, $parent = null, $label= null): static
     {
         $static = app(static::class, ['name' => $name]);
         $static->configure()
-            ->label($static->getTraductionFormLabel($name))
-            ->placeholder($static->getTraductionFormPlaceholder($name))
+            ->label($static->getTraductionFormLabel($label ?? $name))
+            ->placeholder($static->getTraductionFormPlaceholder($label ?? $name))
             ->options(function (Get $get) use ($record, $parent, $static) {
                 if ($record->connectionFrom)
                     return $static->getColumnsOptions($record->connectionFrom, $get($parent));
@@ -39,12 +39,12 @@ class SelectColumnField extends Select
         return $static;
     }
 
-    public static function makeToOptions(string $name, AbstractModelRestore | null $record = null, $parent = null): static
+    public static function makeToOptions(string $name, AbstractModelRestore | null $record = null, $parent = null, $label= null): static
     {
         $static = app(static::class, ['name' => $name]);
         $static->configure()
-            ->label($static->getTraductionFormLabel($name))
-            ->placeholder($static->getTraductionFormPlaceholder($name))
+            ->label($static->getTraductionFormLabel($label ?? $name))
+            ->placeholder($static->getTraductionFormPlaceholder($label ?? $name))
             ->options(function (Get $get) use ($record, $parent, $static) {
                 if ($record->connectionTo)
                     return $static->getColumnsOptions($record->connectionTo, $get($parent));
@@ -55,12 +55,12 @@ class SelectColumnField extends Select
     }
 
 
-    public static function make(string $name, AbstractModelRestore | null $record = null): static
+    public static function make(string $name, AbstractModelRestore | null $record = null, $label= null): static
     {
         $static = app(static::class, ['name' => $name]);
         $static->configure()
-            ->label($static->getTraductionFormLabel($name))
-            ->placeholder($static->getTraductionFormPlaceholder($name));
+            ->label($static->getTraductionFormLabel($label ?? $name))
+            ->placeholder($static->getTraductionFormPlaceholder($label ?? $name));
 
         return $static;
     }

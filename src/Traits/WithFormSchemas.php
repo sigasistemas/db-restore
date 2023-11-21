@@ -49,18 +49,19 @@ trait WithFormSchemas
                     ->columnSpan([
                         'md' => '4',
                     ]),
-                SelectTableToField::makeTable('table_name', $record,  'relation_table_name')
+                SelectTableToField::makeTable('table_from', $record,  'relation_table_name')
+                    ->live()
                     ->required()
                     ->columnSpan([
                         'md' => '4',
                     ]),
 
-                SelectColumnToField::makeColumn('column_to', $record, 'relation_column_to')
+                SelectColumnField::makeToOptions('column_to', $record, 'table_from', 'relation_column_to')
                     ->required()
                     ->columnSpan([
                         'md' => '6',
                     ]),
-                SelectColumnToField::makeColumn('column_value', $record, 'relation_column_value')
+                SelectColumnField::makeToOptions('column_value', $record, 'table_from',  'relation_column_value')
                     ->required()
                     ->columnSpan([
                         'md' => '6',

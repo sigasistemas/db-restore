@@ -438,7 +438,7 @@ class RestoreHelper
                 //Conexao da tabela de destino
                 // $connectionName = $connectionName;
                 //Nome da tabela de destino que vamos recuperar o dado
-                $tableName = $relation->table_name;
+                $tableName = $relation->table_from;
                 //Coluna da tabela de destino que vamos recuperar o dado
                 //Geraralmente é o id, mas tambem pode ser o campo slug ou o campo que foi salvo o id da tabela de origem
                 $columnToName = $relation->column_to;
@@ -446,6 +446,9 @@ class RestoreHelper
                 $columnFromName = $relation->column_from;
                 //Nome da coluna que vamos recuperar o dado
                 $columnValue = $relation->column_value;
+                if($connectionName instanceof Connection){
+                    $connectionName = RestoreHelper::getConnectionCloneOptions($connectionName);
+                }
                 //Se o valor da coluna da tabela de origem for igual ao valor da coluna da tabela de destino
                 if (Cache::has(sprintf('_%s_%s', $column_from, $val))) {
                     $val = Cache::get(sprintf('_%s_%s', $column_from, $val));

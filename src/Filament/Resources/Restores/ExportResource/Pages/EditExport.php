@@ -8,8 +8,7 @@
 
 namespace Callcocam\DbRestore\Filament\Resources\Restores\ExportResource\Pages;
 
-use  Callcocam\DbRestore\Filament\Resources\Restores\ExportResource;
-use Callcocam\DbRestore\Forms\Components\ConnectionField;
+use  Callcocam\DbRestore\Filament\Resources\Restores\ExportResource; 
 use Callcocam\DbRestore\Forms\Components\ConnectionToField;
 use Callcocam\DbRestore\Forms\Components\SelectColumnField;
 use Callcocam\DbRestore\Forms\Components\SelectTableToField;
@@ -25,8 +24,7 @@ use Callcocam\DbRestore\Traits\WithFormSchemas;
 use Callcocam\DbRestore\Traits\WithSections;
 use Callcocam\DbRestore\Traits\WithTables;
 use Filament\Actions;
-use Filament\Forms\Form;
-use Filament\Forms;
+use Filament\Forms\Form; 
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -61,11 +59,10 @@ class EditExport extends EditRecord
                     $sheet->setTitle($record->name);
                     foreach ($columns as   $column) {
                         $sheet->setCellValue(sprintf('%s1', $column->column_from), Str::title($column->column_to));
-                    }
+                    } 
+                    $rows = RestoreHelper::getFromDatabaseRows($record, $record->table_from);
 
-                    $rows = RestoreHelper::getFromDatabaseRows($record, $record->table_name);
-
-                    $to_columns = RestoreHelper::getColumsSchema($columns, $record->table_name, 'column_to');
+                    $to_columns = RestoreHelper::getColumsSchema($columns, $record->table_from, 'column_to');
 
                     $values = RestoreHelper::getDataExportValues($rows, $to_columns, $record->connectionTo);
                     $key = 1;

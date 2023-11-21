@@ -39,7 +39,7 @@ class DbRestoreFileJob implements ShouldQueue
         $fromConnection = RestoreHelper::getConnectionCloneOptions($this->record->connectionTo);
 
         $model = DB::connection($fromConnection)
-            ->table($this->record->table_name);
+            ->table($this->record->table_to);
 
         $values = RestoreHelper::getDataValues($this->rows, $this->to_columns, $fromConnection, null, null, null, $this->children);
 
