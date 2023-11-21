@@ -1,31 +1,39 @@
 <?php
 
+
 /**
  * Created by Claudio Campos.
  * User: callcocam@gmail.com, contato@sigasmart.com.br
  * https://www.sigasmart.com.br
  */
 
-namespace Callcocam\DbRestore\Traits;
+namespace Callcocam\DbRestore\Forms\Components;
 
-use Callcocam\DbRestore\Models\Connection; 
 use Callcocam\DbRestore\Helpers\RestoreHelper;
+use Callcocam\DbRestore\Models\AbstractModelRestore;
+use Callcocam\DbRestore\Models\Connection;
+use Callcocam\DbRestore\Traits\HasTraduction;
+use Filament\Forms\Components\Select;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-trait WithColumns
+class SelectColumnField extends Select
 {
-    protected function getDataBases($schema)
+    use HasTraduction;
+
+
+    public static function make(string $name, AbstractModelRestore | null $record = null): static
     {
-        $db = DB::connection($schema);
+        $static = app(static::class, ['name' => $name]);
+        $static->configure()
+        ->label($static->getTraductionFormLabel($name))
+        ->placeholder($static->getTraductionFormPlaceholder($name));
 
-        $tables = $db->getDoctrineSchemaManager()->listDatabases();
-
-        return array_combine($tables, $tables);
+        return $static;
     }
- 
-    protected function getColumns(Connection $connection, $from_table, $prefix = 'from')
+
+    protected function getColumnsOptions(Connection $connection, $from_table, $prefix = 'from')
     {
         $from_database = $connection->database;
 

@@ -9,12 +9,19 @@
 namespace Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource\Pages;
 
 use Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource;
+use Callcocam\DbRestore\Forms\Components\ConnectionField;
+use Callcocam\DbRestore\Forms\Components\SelectTableField;
+use Callcocam\DbRestore\Forms\Components\SelectTableFromField;
+use Callcocam\DbRestore\Forms\Components\SelectTableToField;
+use Callcocam\DbRestore\Forms\Components\TextInputField;
 use Callcocam\DbRestore\Models\Restore;
 use Callcocam\DbRestore\Traits\HasDatesFormForTableColums;
 use Callcocam\DbRestore\Traits\HasStatusColumn;
 use Callcocam\DbRestore\Traits\HasTraduction;
 use Callcocam\DbRestore\Traits\WithColumns;
 use Callcocam\DbRestore\Traits\WithFormSchemas;
+use Callcocam\DbRestore\Traits\WithSections;
+use Callcocam\DbRestore\Traits\WithTables;
 use Filament\Actions;
 use Filament\Forms\Form;
 use Filament\Forms;
@@ -22,7 +29,7 @@ use Filament\Resources\Pages\EditRecord;
 
 class EditRestore extends EditRecord
 {
-    use HasStatusColumn, HasDatesFormForTableColums, WithFormSchemas, WithColumns, HasTraduction;
+    use HasStatusColumn, HasDatesFormForTableColums, WithFormSchemas, WithColumns, HasTraduction, WithTables, WithSections;
 
     protected static string $resource = RestoreResource::class;
 
@@ -40,9 +47,7 @@ class EditRestore extends EditRecord
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('connection_from_id')
-                    ->label($this->getTraductionFormLabel('connection_from_id'))
-                    ->placeholder($this->getTraductionFormPlaceholder('connection_from_id'))
+                ConnectionField::make('connection_from_id')
                     ->required()
                     ->relationship(
                         name: 'connectionFrom',
@@ -50,13 +55,9 @@ class EditRestore extends EditRecord
                     )
                     ->columnSpan([
                         'md' => '4'
-                    ])
-                    ->manageOptionForm($this->getFormSchemaConnectionOptions()),
-                Forms\Components\Select::make('connection_to_id')
-                    ->label($this->getTraductionFormLabel('connection_to_id'))
-                    ->placeholder($this->getTraductionFormPlaceholder('connection_to_id'))
-                    ->required()
-                    ->manageOptionForm($this->getFormSchemaConnectionOptions())
+                    ]),
+                ConnectionField::make('connection_to_id')
+                    ->required() 
                     ->columnSpan([
                         'md' => '4'
                     ])
@@ -64,41 +65,23 @@ class EditRestore extends EditRecord
                         name: 'connectionTo',
                         titleAttribute: 'name',
                     ),
-                Forms\Components\TextInput::make('name')
-                    ->label($this->getTraductionFormLabel('name'))
-                    ->placeholder($this->getTraductionFormPlaceholder('name'))
+                TextInputField::make('name')
                     ->required()
                     ->columnSpan([
                         'md' => '4'
                     ])
                     ->maxLength(255),
-                Forms\Components\Select::make('table_from')
-                    ->label($this->getTraductionFormLabel('table_from'))
-                    ->placeholder($this->getTraductionFormPlaceholder('table_from'))
+                SelectTableFromField::makeTable('table_from', $this->record)
                     ->required()
                     ->columnSpan([
                         'md' => '4'
-                    ])
-                    ->options(function (Restore $record) {
-                        if ($record->connectionFrom)
-                            return $this->getTables($record->connectionFrom);
-                        return [];
-                    }),
-                Forms\Components\Select::make('table_to')
-                    ->label($this->getTraductionFormLabel('table_to'))
-                    ->placeholder($this->getTraductionFormPlaceholder('table_to'))
+                    ]),
+                SelectTableToField::make('table_to', $this->record)
                     ->required()
                     ->columnSpan([
                         'md' => '4'
-                    ])
-                    ->options(function (Restore $record) {
-                        if ($record->connectionTo)
-                            return $this->getTables($record->connectionTo);
-                        return [];
-                    }),
-                Forms\Components\Select::make('restore_model_id')
-                    ->label($this->getTraductionFormLabel('restore_model_id'))
-                    ->placeholder($this->getTraductionFormPlaceholder('restore_model_id'))
+                    ]),
+                SelectTableField::make('restore_model_id')
                     ->relationship(
                         name: 'restoreModel',
                         titleAttribute: 'name'
@@ -106,54 +89,11 @@ class EditRestore extends EditRecord
                     ->columnSpan([
                         'md' => '4'
                     ]),
-                Forms\Components\Section::make($this->getTraduction('columns', 'restore', 'form',  'label'))
-                    ->description($this->getTraduction('columns', 'restore', 'form',  'description'))
-                    ->visible(fn (Restore $record) => $record->table_to && $record->table_from)
-                    ->collapsed()
-                    ->schema(function (Restore $record) {
-                        return  [
-                            Forms\Components\Repeater::make('columns')
-                                ->relationship('columns')
-                                ->hiddenLabel()
-                                ->schema(function () use ($record) {
-                                    return $this->getColumnsSchemaForm($record, $record->table_from, $record->table_to);
-                                })
-                                ->columns(12)
-                                ->columnSpanFull()
-                        ];
-                    }),
-                Forms\Components\Section::make($this->getTraduction('filters', 'restore', 'form',  'label'))
-                    ->description($this->getTraduction('filters', 'restore', 'form',  'description'))
-                    ->visible(fn (Restore $record) => $record->table_to)
-                    ->collapsed()
-                    ->schema(function (Restore $record) {
-                        return  [
-                            Forms\Components\Repeater::make('filters')
-                                ->relationship('filters')
-                                ->hiddenLabel()
-                                ->schema(function () use ($record) {
-                                    return $this->getFiltersSchemaForm($record->connectionTo, $record->table_to);
-                                })
-                                ->columns(12)
-                                ->columnSpanFull()
-                        ];
-                    }),
-                Forms\Components\Section::make($this->getTraduction('orderings', 'restore', 'form',  'label'))
-                    ->description($this->getTraduction('orderings', 'restore', 'form',  'description'))
-                    ->visible(fn (Restore $record) => $record->table_from)
-                    ->collapsed()
-                    ->schema(function (Restore $record) {
-                        return  [
-                            Forms\Components\Repeater::make('orderings')
-                                ->relationship('orderings')
-                                ->hiddenLabel()
-                                ->schema(function () use ($record) {
-                                    return $this->getOrderingsSchemaForm($record->connectionFrom, $record->table_from);
-                                })
-                                ->columns(12)
-                                ->columnSpanFull()
-                        ];
-                    }),
+                $this->getSectionColumnsSchema($this->record, function ($record) {
+                    return $this->getColumnsSchemaForm($record, $record->table_from, $record->table_to);
+                })->visible(fn (Restore $record) => $record->table_to && $record->table_from),
+                $this->getSectionFiltersSchema($this->record)->visible(fn (Restore $record) => $record->table_to),
+                $this->getSectionOrderingsSchema($this->record)->visible(fn (Restore $record) => $record->table_from),
                 static::getStatusFormRadioField(),
                 Forms\Components\Textarea::make('description')
                     ->label($this->getTraductionFormLabel('description'))

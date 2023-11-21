@@ -12,6 +12,7 @@ use Callcocam\DbRestore\Models\Children;
 use Callcocam\DbRestore\Traits\HasTraduction;
 use Callcocam\DbRestore\Traits\WithColumns;
 use Callcocam\DbRestore\Traits\WithFormSchemas;
+use Callcocam\DbRestore\Traits\WithTables;
 use Filament\Forms;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Form;
@@ -22,7 +23,7 @@ use Filament\Tables\Table;
 
 class ChildrensRelationManager extends RelationManager
 {
-    use WithColumns, WithFormSchemas, HasTraduction;
+    use WithColumns, WithFormSchemas, HasTraduction, WithTables;
 
     protected static string $relationship = 'childrens';
 
@@ -92,11 +93,7 @@ class ChildrensRelationManager extends RelationManager
                 ->placeholder($this->getTraductionFormPlaceholder('table_from'))
                 ->required()
                 ->live()
-                ->options(function () use ($ownerRecord) {
-                    if ($ownerRecord->connectionFrom)
-                        return $this->getTables($ownerRecord->connectionFrom);
-                    return [];
-                })
+                ->options($this->getTablesOptions($ownerRecord->connectionTo, 'from'))
                 ->columnSpan([
                     'md' => '3'
                 ]),
@@ -117,11 +114,7 @@ class ChildrensRelationManager extends RelationManager
                 ->placeholder($this->getTraductionFormPlaceholder('table_to'))
                 ->required()
                 ->live()
-                ->options(function () use ($ownerRecord) {
-                    if ($ownerRecord->connectionTo)
-                        return $this->getTables($ownerRecord->connectionTo);
-                    return [];
-                })
+                ->options($this->getTablesOptions($ownerRecord->connectionTo, 'to'))
                 ->columnSpan([
                     'md' => '3'
                 ]),
@@ -144,7 +137,7 @@ class ChildrensRelationManager extends RelationManager
                         ->description($this->getTraduction('columns', 'restore', 'form', 'description'))
                         ->visible($ownerRecord->table_from && $ownerRecord->table_to)
                         ->collapsed()
-                        ->schema(function (Children | null $record = null) use ($ownerRecord) { 
+                        ->schema(function (Children | null $record = null) use ($ownerRecord) {
                             if (!$record) {
                                 return [];
                             }
@@ -152,7 +145,7 @@ class ChildrensRelationManager extends RelationManager
                                 Forms\Components\Repeater::make('columns')
                                     ->relationship('columns')
                                     ->hiddenLabel()
-                                    ->schema(function () use ($ownerRecord, $record)  {
+                                    ->schema(function () use ($ownerRecord, $record) {
                                         return $this->getColumnsSchemaForm($ownerRecord, $record->table_from, $record->table_to);
                                     })
                                     ->columns(12)

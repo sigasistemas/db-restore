@@ -8,6 +8,12 @@
 
 namespace Callcocam\DbRestore\Traits;
 
+use Callcocam\DbRestore\Forms\Components\SelectColumnField;
+use Callcocam\DbRestore\Forms\Components\SelectColumnToField;
+use Callcocam\DbRestore\Forms\Components\SelectTableField;
+use Callcocam\DbRestore\Forms\Components\SelectTableToField;
+use Callcocam\DbRestore\Forms\Components\TextareaField;
+use Callcocam\DbRestore\Forms\Components\TextInputField;
 use Callcocam\DbRestore\Helpers\RestoreHelper;
 use Callcocam\DbRestore\Models\Column;
 use Callcocam\DbRestore\Models\Connection;
@@ -18,163 +24,18 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Illuminate\Support\Facades\DB;
 
 trait WithFormSchemas
 {
-    public function getFormSchemaConnectionOptions()
-    {
-        return [
-            Forms\Components\Group::make([
-                Forms\Components\TextInput::make('name')
-                    ->label($this->getTraductionFormLabel('name'))
-                    ->placeholder($this->getTraductionFormPlaceholder('name'))
-                    ->required()
-                    ->columnSpan([
-                        'md' => '4',
-                    ])
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('host')
-                    ->label($this->getTraductionFormLabel('host'))
-                    ->placeholder($this->getTraductionFormPlaceholder('host'))
-                    ->required()
-                    ->default('localhost')
-                    ->columnSpan([
-                        'md' => '3',
-                    ])
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('port')
-                    ->label($this->getTraductionFormLabel('port'))
-                    ->placeholder($this->getTraductionFormPlaceholder('port'))
-                    ->default('3306')
-                    ->required()
-                    ->columnSpan([
-                        'md' => '2',
-                    ])
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('database')
-                    ->label($this->getTraductionFormLabel('database'))
-                    ->placeholder($this->getTraductionFormPlaceholder('database'))
-                    ->required()
-                    ->columnSpan([
-                        'md' => '3',
-                    ])
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('username')
-                    ->label($this->getTraductionFormLabel('username'))
-                    ->placeholder($this->getTraductionFormPlaceholder('username'))
-                    ->required()
-                    ->default('root')
-                    ->columnSpan([
-                        'md' => '3',
-                    ])
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('password')
-                    ->label($this->getTraductionFormLabel('password'))
-                    ->placeholder($this->getTraductionFormPlaceholder('password'))
-                    ->columnSpan([
-                        'md' => '3',
-                    ])
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('charset')
-                    ->label($this->getTraductionFormLabel('charset'))
-                    ->placeholder($this->getTraductionFormPlaceholder('charset'))
-                    ->default('utf8mb4')
-                    ->required()
-                    ->columnSpan([
-                        'md' => '2',
-                    ])
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('prefix')
-                    ->label($this->getTraductionFormLabel('prefix'))
-                    ->placeholder($this->getTraductionFormPlaceholder('prefix'))
-                    ->columnSpan([
-                        'md' => '2',
-                    ])
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('engine')
-                    ->label($this->getTraductionFormLabel('engine'))
-                    ->placeholder($this->getTraductionFormPlaceholder('engine'))
-                    ->default('InnoDB')
-                    ->required()
-                    ->columnSpan([
-                        'md' => '2',
-                    ])
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('collation')
-                    ->label($this->getTraductionFormLabel('collation'))
-                    ->placeholder($this->getTraductionFormPlaceholder('collation'))
-                    ->default('utf8mb4_unicode_ci')
-                    ->required()
-                    ->columnSpan([
-                        'md' => '4',
-                    ])
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('url')
-                    ->label($this->getTraductionFormLabel('url'))
-                    ->placeholder($this->getTraductionFormPlaceholder('url'))
-                    ->columnSpan([
-                        'md' => '8',
-                    ])
-                    ->maxLength(255),
-                Forms\Components\Select::make('driver')
-                    ->label($this->getTraductionFormLabel('driver'))
-                    ->placeholder($this->getTraductionFormPlaceholder('driver'))
-                    ->options([
-                        'mysql' => 'Mysql',
-                        'pgsql' => 'Pgsql',
-                        'sqlite' => 'Sqlite',
-                        'sqlsrv' => 'Sqlsrv',
-                        'mongodb' => 'Mongodb',
-                    ])
-                    ->default('mysql')
-                    ->required()
-                    ->columnSpan([
-                        'md' => '4',
-                    ]),
-                Forms\Components\Select::make('type')
-                    ->label($this->getTraductionFormLabel('type'))
-                    ->placeholder($this->getTraductionFormPlaceholder('type'))
-                    ->required()
-                    ->options([
-                        'from' => 'From',
-                        'to' => 'To',
-                        'all' => 'All',
-                    ])
-                    ->default('all')
-                    ->columnSpan([
-                        'md' => '4',
-                    ]),
-                Forms\Components\Select::make('status')
-                    ->label($this->getTraductionFormLabel('status'))
-                    ->placeholder($this->getTraductionFormPlaceholder('status'))
-                    ->required()
-                    ->options([
-                        'draft' => 'Draft',
-                        'published' => 'Published',
-                    ])
-                    ->columnSpan([
-                        'md' => '4',
-                    ]),
-                Forms\Components\Textarea::make('description')
-                    ->label($this->getTraductionFormLabel('description'))
-                    ->placeholder($this->getTraductionFormPlaceholder('description'))
-                    ->maxLength(65535)
-                    ->columnSpanFull(),
 
-            ])->columns(12),
-        ];
-    }
 
     protected function getFormSchemaRelationOptions($record)
     {
         return [
             Group::make([
-                Forms\Components\Select::make('restore_model_id')
-                    ->label($this->getTraductionFormLabel('restore_model_id'))
-                    ->placeholder($this->getTraductionFormPlaceholder('restore_model_id'))
+                SelectTableField::make('restore_model_id')
                     ->relationship(
                         name: 'restoreModel',
                         titleAttribute: 'name'
@@ -182,60 +43,28 @@ trait WithFormSchemas
                     ->columnSpan([
                         'md' => '4',
                     ]),
-                Forms\Components\TextInput::make('name')
-                    ->label($this->getTraductionFormLabel('relation_name'))
-                    ->placeholder($this->getTraductionFormPlaceholder('relation_name'))
+                TextInputField::make('name')
                     ->required()
                     ->columnSpan([
                         'md' => '4',
                     ]),
-                Forms\Components\Select::make('table_name')
-                    ->label($this->getTraductionFormLabel('relation_table_name'))
-                    ->placeholder($this->getTraductionFormPlaceholder('relation_table_name'))
+                SelectTableToField::makeTable('table_name', $record,  'relation_table_name')
                     ->required()
-                    ->options(function () use ($record) {
-                        if ($record->connectionTo) {
-                            return $this->getTables($record->connectionTo);
-                        }
-
-                        return [];
-                    })
                     ->columnSpan([
                         'md' => '4',
                     ]),
 
-                Forms\Components\Select::make('column_to')
-                    ->label($this->getTraductionFormLabel('relation_column_to'))
-                    ->placeholder($this->getTraductionFormPlaceholder('relation_column_to'))
+                SelectColumnToField::makeColumn('column_to', $record, 'relation_column_to')
                     ->required()
-                    ->options(function () use ($record) {
-                        if ($connectionTo = $record->connectionTo) {
-                            return $this->getColumns($connectionTo, $record->table_to, 'to');
-                        }
-
-                        return [];
-                    })
                     ->columnSpan([
                         'md' => '6',
                     ]),
-                Forms\Components\Select::make('column_value')
-                    ->label($this->getTraductionFormLabel('relation_column_value'))
-                    ->placeholder($this->getTraductionFormPlaceholder('relation_column_value'))
+                SelectColumnToField::makeColumn('column_value', $record, 'relation_column_value')
                     ->required()
-                    ->options(function () use ($record) {
-                        if ($connectionTo = $record->connectionTo) {
-                            return $this->getColumns($connectionTo, $record->table_to, 'to');
-                        }
-
-                        return [];
-                    })
                     ->columnSpan([
                         'md' => '6',
                     ]),
-                Forms\Components\Textarea::make('description')
-                    ->label($this->getTraductionFormLabel('description'))
-                    ->placeholder($this->getTraductionFormPlaceholder('description'))
-                    ->columnSpanFull(),
+                TextareaField::makeText('description'),
 
             ])->columns(12),
         ];
@@ -283,41 +112,8 @@ trait WithFormSchemas
 
         return  $this->getColumnsSchema($record, $columns, $relation);
     }
-    protected function getColumnsSchemaFileChildrensForm($record, $table_to, $relation = 'relation')
-    {
-        $columns = [];
-
-        if (Storage::exists($record->file)) {
 
 
-            $headers = RestoreHelper::getFromColumnsFileOptions($record);
-
-
-            $headers = array_filter($headers);
-
-            $columns[] = Forms\Components\Select::make('column_from')
-                ->label($this->getTraductionFormLabel('column_from'))
-                ->placeholder($this->getTraductionFormPlaceholder('column_from'))
-                ->options(function () use ($headers) {
-                    return $headers;
-                })
-                ->columnSpan([
-                    'md' => '2',
-                ]);
-        }
-
-        $columns[] = Forms\Components\Select::make('column_to')
-            ->label($this->getTraductionFormLabel('column_to'))
-            ->placeholder($this->getTraductionFormPlaceholder('column_to'))
-            ->required()
-            ->options(function () use ($record, $table_to) {  
-                return DB::connection(RestoreHelper::getConnectionCloneOptions($record->connectionTo))->table($table_to)->pluck('name', 'id')->toArray();
-            })->columnSpan([
-                'md' => '2',
-            ]);
-
-        return  $this->getColumnsSchema($record, $columns, $relation);
-    }
     protected function getColumnsSchemaFileExportForm($record, $table_to, $relation = 'relation')
     {
         $columns = [];
@@ -358,9 +154,7 @@ trait WithFormSchemas
         $columns = [];
 
         if ($record->connectionFrom) {
-            $columns[] =   Forms\Components\Select::make('column_from')
-                ->label($this->getTraductionFormLabel('column_from'))
-                ->placeholder($this->getTraductionFormPlaceholder('column_from'))
+            $columns[] = SelectColumnField::make('column_from')
                 ->required()
                 ->options(function () use ($record, $table_from) {
                     if ($record->connectionFrom) {
@@ -386,9 +180,7 @@ trait WithFormSchemas
     protected function getColumnsSchema($record, $columns, $relation = 'relation')
     {
 
-        $columns[] =  Forms\Components\Select::make('relation_id')
-            ->label($this->getTraductionFormLabel('relation_id'))
-            ->placeholder($this->getTraductionFormPlaceholder('relation_id'))
+        $columns[] =  SelectColumnField::make('relation_id')
             ->relationship(
                 name: $relation,
                 titleAttribute: 'name'
@@ -398,9 +190,7 @@ trait WithFormSchemas
                 'md' => '3',
             ]);
 
-        $columns[] = Forms\Components\TextInput::make('default_value')
-            ->label($this->getTraductionFormLabel('default_value'))
-            ->placeholder($this->getTraductionFormPlaceholder('default_value'))
+        $columns[] =  TextInputField::make('default_value')
             ->hintAction(
                 Action::make('searchDefaultValue')
                     ->fillForm(function (Column $column) {
@@ -433,9 +223,7 @@ trait WithFormSchemas
                 'md' => '3',
             ]);
 
-        $columns[] = Forms\Components\Select::make('type')
-            ->label($this->getTraductionFormLabel('type'))
-            ->placeholder($this->getTraductionFormPlaceholder('type'))
+        $columns[] = SelectColumnField::make('type') 
             ->required()
             ->options([
                 'string' => 'String',
@@ -463,16 +251,12 @@ trait WithFormSchemas
     {
 
         return [
-            Forms\Components\TextInput::make('name')
-                ->label($this->getTraductionFormLabel('name'))
-                ->placeholder($this->getTraductionFormPlaceholder('name'))
+            TextInputField::make('name')
                 ->required()
                 ->columnSpan([
                     'md' => '3',
                 ]),
-            Forms\Components\Select::make('column')
-                ->label($this->getTraductionFormLabel('column'))
-                ->placeholder($this->getTraductionFormPlaceholder('column'))
+            SelectColumnField::make('column')
                 ->required()
                 ->options(function () use ($connection, $table) {
                     if ($connection) {
@@ -484,9 +268,7 @@ trait WithFormSchemas
                 ->columnSpan([
                     'md' => '2',
                 ]),
-            Forms\Components\Select::make('operator')
-                ->label($this->getTraductionFormLabel('operator'))
-                ->placeholder($this->getTraductionFormPlaceholder('operator'))
+            SelectColumnField::make('operator')
                 ->required()
                 ->options([
                     '=' => '=',
@@ -507,15 +289,11 @@ trait WithFormSchemas
                 ->columnSpan([
                     'md' => '2',
                 ]),
-            Forms\Components\TextInput::make('value')
-                ->label($this->getTraductionFormLabel('value'))
-                ->placeholder($this->getTraductionFormPlaceholder('value'))
+            TextInputField::make('value')
                 ->columnSpan([
                     'md' => '3',
                 ]),
-            Forms\Components\Select::make('type')
-                ->label($this->getTraductionFormLabel('type'))
-                ->placeholder($this->getTraductionFormPlaceholder('type'))
+            SelectColumnField::make('type')
                 ->required()
                 ->options([
                     'create' => 'Create',
@@ -534,16 +312,12 @@ trait WithFormSchemas
     {
 
         return [
-            Forms\Components\TextInput::make('name')
-                ->label($this->getTraductionFormLabel('name'))
-                ->placeholder($this->getTraductionFormPlaceholder('name'))
+            TextInputField::make('name')
                 ->required()
                 ->columnSpan([
                     'md' => '3',
                 ]),
-            Forms\Components\Select::make('column')
-                ->label($this->getTraductionFormLabel('column'))
-                ->placeholder($this->getTraductionFormPlaceholder('column'))
+            SelectColumnField::make('column')
                 ->required()
                 ->options(function () use ($connection, $table) {
                     if ($connection) {
@@ -555,9 +329,7 @@ trait WithFormSchemas
                 ->columnSpan([
                     'md' => '4',
                 ]),
-            Forms\Components\Select::make('direction')
-                ->label($this->getTraductionFormLabel('direction'))
-                ->placeholder($this->getTraductionFormPlaceholder('direction'))
+            SelectColumnField::make('direction')
                 ->required()
                 ->options([
                     'ASC' => 'ASC',
@@ -566,8 +338,7 @@ trait WithFormSchemas
                 ->columnSpan([
                     'md' => '3',
                 ]),
-            Forms\Components\Select::make('ordering')->label($this->getTraductionFormLabel('ordering'))
-                ->placeholder($this->getTraductionFormPlaceholder('ordering'))
+            SelectColumnField::make('ordering')
                 ->required()
                 ->options([
                     '1' => '1',
@@ -584,9 +355,7 @@ trait WithFormSchemas
     protected function getColumnToSelect($connectionTo, $table_to)
     {
 
-        return Forms\Components\Select::make('column_to')
-            ->label($this->getTraductionFormLabel('column_to'))
-            ->placeholder($this->getTraductionFormPlaceholder('column_to'))
+        return SelectColumnField::make('column_to')
             ->required()
             ->options(function () use ($connectionTo, $table_to) {
                 if ($connectionTo) {
@@ -602,11 +371,9 @@ trait WithFormSchemas
 
         return [
             Section::make()
-                ->schema(function () { 
+                ->schema(function () {
                     return [
-                        Forms\Components\Select::make('connection_id')
-                            ->label($this->getTraductionFormLabel('connection_id'))
-                            ->placeholder($this->getTraductionFormPlaceholder('connection_id'))
+                        SelectColumnField::make('connection_id')
                             ->live()
                             ->afterStateUpdated(function (string $state) {
                                 if ($connectionTo = Connection::find($state)) {
@@ -619,27 +386,16 @@ trait WithFormSchemas
                             ->columnSpan([
                                 'md' => '3',
                             ]),
-                        Forms\Components\Select::make('table_name')
-                            ->label($this->getTraductionFormLabel('table_name'))
-                            ->placeholder($this->getTraductionFormPlaceholder('table_name'))
+                        SelectColumnField::make('table_name')
                             ->live()
                             ->required()
                             ->options(function (Get $get) {
-                                $connectionKey = $get('connection_id');
-                                if ($connectionTo = Cache::rememberForever($connectionKey, function () use ($connectionKey) {
-                                    return Connection::find($connectionKey);
-                                })) {
-                                    return $this->getTables($connectionTo);
-                                }
-
-                                return [];
+                                return $this->getTablesOptions($get('connection_id'));
                             })
                             ->columnSpan([
                                 'md' => '3',
                             ]),
-                        Forms\Components\Select::make('column_key')
-                            ->label($this->getTraductionFormLabel('column_key'))
-                            ->placeholder($this->getTraductionFormPlaceholder('column_key'))
+                        SelectColumnField::make('column_key')
                             ->live()
                             ->required()
                             ->options(function (Get $get) {
@@ -655,9 +411,7 @@ trait WithFormSchemas
                             ->columnSpan([
                                 'md' => '3',
                             ]),
-                        Forms\Components\Select::make('column_label')
-                            ->label($this->getTraductionFormLabel('column_label'))
-                            ->placeholder($this->getTraductionFormPlaceholder('column_label'))
+                        SelectColumnField::make('column_label')
                             ->live()
                             ->required()
                             ->options(function (Get $get) {
@@ -673,9 +427,7 @@ trait WithFormSchemas
                             ->columnSpan([
                                 'md' => '3',
                             ]),
-                        Forms\Components\Select::make('column_value')
-                            ->label($this->getTraductionFormLabel('column_value'))
-                            ->placeholder($this->getTraductionFormPlaceholder('column_value'))
+                        SelectColumnField::make('column_value')
                             ->visible(function (Get $get) {
                                 return $get('column_label') && $get('column_key');
                             })

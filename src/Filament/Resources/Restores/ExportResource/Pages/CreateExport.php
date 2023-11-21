@@ -9,6 +9,9 @@
 namespace Callcocam\DbRestore\Filament\Resources\Restores\ExportResource\Pages;
 
 use  Callcocam\DbRestore\Filament\Resources\Restores\ExportResource;
+use Callcocam\DbRestore\Forms\Components\ConnectionField;
+use Callcocam\DbRestore\Forms\Components\TextareaField;
+use Callcocam\DbRestore\Forms\Components\TextInputField;
 use Illuminate\Database\Eloquent\Builder;
 use Callcocam\DbRestore\Traits\HasStatusColumn;
 use Callcocam\DbRestore\Traits\HasTraduction;
@@ -27,26 +30,19 @@ class CreateExport extends CreateRecord
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->label($this->getTraductionFormLabel('name'))
-                    ->placeholder($this->getTraductionFormPlaceholder('name'))
+                TextInputField::make('name')
                     ->columnSpan([
                         'md' => 6
                     ])
                     ->required(),
-                Forms\Components\Select::make('connection_id')
-                    ->label($this->getTraductionFormLabel('connection_id'))
-                    ->placeholder($this->getTraductionFormPlaceholder('connection_id'))
+                ConnectionField::make('connection_id')
                     ->relationship(name: 'connectionTo', titleAttribute: 'name', modifyQueryUsing: fn (Builder $query) => $query->whereType('to'),)
                     ->columnSpan([
                         'md' => 6
                     ])
                     ->required(),
                 static::getStatusFormRadioField(),
-                Forms\Components\Textarea::make('description')
-                    ->label($this->getTraductionFormLabel('description'))
-                    ->placeholder($this->getTraductionFormPlaceholder('description'))
-                    ->columnSpanFull()
+                TextareaField::makeText('description')
             ])->columns(12);
     }
 }

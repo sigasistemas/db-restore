@@ -9,6 +9,12 @@
 namespace Callcocam\DbRestore\Filament\Resources\Restores\ExportResource\Pages;
 
 use  Callcocam\DbRestore\Filament\Resources\Restores\ExportResource;
+use Callcocam\DbRestore\Forms\Components\ConnectionField;
+use Callcocam\DbRestore\Forms\Components\ConnectionToField;
+use Callcocam\DbRestore\Forms\Components\SelectColumnField;
+use Callcocam\DbRestore\Forms\Components\SelectTableToField;
+use Callcocam\DbRestore\Forms\Components\TextareaField;
+use Callcocam\DbRestore\Forms\Components\TextInputField;
 use Callcocam\DbRestore\Helpers\RestoreHelper;
 use  Callcocam\DbRestore\Models\Export;
 use Callcocam\DbRestore\Traits\HasDatesFormForTableColums;
@@ -16,6 +22,8 @@ use Callcocam\DbRestore\Traits\HasStatusColumn;
 use Callcocam\DbRestore\Traits\HasTraduction;
 use Callcocam\DbRestore\Traits\WithColumns;
 use Callcocam\DbRestore\Traits\WithFormSchemas;
+use Callcocam\DbRestore\Traits\WithSections;
+use Callcocam\DbRestore\Traits\WithTables;
 use Filament\Actions;
 use Filament\Forms\Form;
 use Filament\Forms;
@@ -26,7 +34,7 @@ use Illuminate\Support\Str;
 
 class EditExport extends EditRecord
 {
-    use HasTraduction, HasStatusColumn, HasDatesFormForTableColums, WithColumns, WithFormSchemas;
+    use HasTraduction, HasStatusColumn, HasDatesFormForTableColums, WithColumns, WithFormSchemas, WithTables, WithSections;
 
     protected static string $resource = ExportResource::class;
 
@@ -99,45 +107,29 @@ class EditExport extends EditRecord
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->label($this->getTraductionFormLabel('name'))
-                    ->placeholder($this->getTraductionFormPlaceholder('name'))
+                TextInputField::make('name')
                     ->columnSpan([
                         'md' => 5
                     ])
                     ->required(),
-                Forms\Components\Select::make('connection_id')
-                    ->label($this->getTraductionFormLabel('connection_id'))
-                    ->placeholder($this->getTraductionFormPlaceholder('connection_id'))
-                    ->relationship('connectionTo', 'name')
+                ConnectionToField::make('connection_id')
                     ->columnSpan([
                         'md' => 3
                     ])
                     ->required(),
-                Forms\Components\Select::make('restore_model_id')
-                    ->label($this->getTraductionFormLabel('restore_model_id'))
-                    ->placeholder($this->getTraductionFormPlaceholder('restore_model_id'))
+                SelectColumnField::make('restore_model_id')
                     ->relationship('restoreModel', 'name')
                     ->columnSpan([
                         'md' => 4
                     ]),
-                Forms\Components\TextInput::make('file')
-                    ->label($this->getTraductionFormLabel('file'))
-                    ->placeholder($this->getTraductionFormPlaceholder('file'))
+                TextInputField::make('file')
                     ->readOnly()
                     ->columnSpanFull(),
-                Forms\Components\Select::make('table_name')
-                    ->label($this->getTraductionFormLabel('table_name'))
-                    ->placeholder($this->getTraductionFormPlaceholder('table_name'))
-                    ->options(function (Export $import) {
-                        return $this->getTables($import->connectionTo, 'from');
-                    })
+                SelectTableToField::make('table_name')
                     ->columnSpan([
                         'md' => 6
                     ])->required(),
-                Forms\Components\Select::make('disk')
-                    ->label($this->getTraductionFormLabel('disk'))
-                    ->placeholder($this->getTraductionFormPlaceholder('disk'))
+                SelectColumnField::make('disk')
                     ->options(function () {
                         $options = config('filesystems.disks', []);
                         $disks = array_keys($options);
@@ -146,9 +138,7 @@ class EditExport extends EditRecord
                     ->columnSpan([
                         'md' => 2
                     ])->required(),
-                Forms\Components\Select::make('extension')
-                    ->label($this->getTraductionFormLabel('extension'))
-                    ->placeholder($this->getTraductionFormPlaceholder('extension'))
+                SelectColumnField::make('extension')
                     ->options(function () {
                         $options = config('restore.extension', ['csv', 'xls', 'xlsx', 'pdf']);
                         $extensions = $options;
@@ -157,9 +147,7 @@ class EditExport extends EditRecord
                     ->columnSpan([
                         'md' => 2
                     ])->required(),
-                Forms\Components\Select::make('delimiter')
-                    ->label($this->getTraductionFormLabel('delimiter'))
-                    ->placeholder($this->getTraductionFormPlaceholder('delimiter'))
+                SelectColumnField::make('delimiter')
                     ->options(function () {
                         $options = config('restore.delimiter', [';', '|', ',']);
                         $delimiters = $options;
@@ -168,59 +156,13 @@ class EditExport extends EditRecord
                     ->columnSpan([
                         'md' => 2
                     ]),
-                Forms\Components\Section::make($this->getTraduction('columns', 'restore', 'form',  'label'))
-                    ->visible(fn (Export $record) => $record->table_name)
-                    ->description($this->getTraduction('columns', 'restore', 'form',  'description'))
-                    ->collapsed()
-                    ->schema(function (Export $record) {
-                        return  [
-                            Forms\Components\Repeater::make('columns')
-                                ->relationship('columns')
-                                ->hiddenLabel()
-                                ->schema(function () use ($record) {
-                                    return $this->getColumnsSchemaFileExportForm($record, $record->table_name);
-                                })
-                                ->columns(12)
-                                ->columnSpanFull()
-                        ];
-                    }),
-                Forms\Components\Section::make($this->getTraduction('filters', 'restore', 'form',  'label'))
-                    ->description($this->getTraduction('filters', 'restore', 'form',  'description'))
-                    ->visible(fn (Export $record) => $record->table_name)
-                    ->collapsed()
-                    ->schema(function (Export $record) {
-                        return  [
-                            Forms\Components\Repeater::make('filters')
-                                ->relationship('filters')
-                                ->hiddenLabel()
-                                ->schema(function () use ($record) {
-                                    return $this->getFiltersSchemaForm($record->connectionTo, $record->table_name);
-                                })
-                                ->columns(12)
-                                ->columnSpanFull()
-                        ];
-                    }),
-                Forms\Components\Section::make($this->getTraduction('orderings', 'restore', 'form',  'label'))
-                    ->description($this->getTraduction('orderings', 'restore', 'form',  'description'))
-                    ->visible(fn (Export $record) => $record->table_name)
-                    ->collapsed()
-                    ->schema(function (Export $record) {
-                        return  [
-                            Forms\Components\Repeater::make('orderings')
-                                ->relationship('orderings')
-                                ->hiddenLabel()
-                                ->schema(function () use ($record) {
-                                    return $this->getOrderingsSchemaForm($record->connectionTo, $record->table_name);
-                                })
-                                ->columns(12)
-                                ->columnSpanFull()
-                        ];
-                    }),
+                $this->getSectionColumnsSchema($this->record, function ($record) {
+                    return $this->getColumnsSchemaFileExportForm($record, $record->table_name);
+                }),
+                $this->getSectionFiltersSchema($this->record),
+                $this->getSectionOrderingsSchema($this->record),
                 static::getStatusFormRadioField(),
-                Forms\Components\Textarea::make('description')
-                    ->label($this->getTraductionFormLabel('description'))
-                    ->placeholder($this->getTraductionFormPlaceholder('description'))
-                    ->columnSpanFull()
+                TextareaField::makeText('description')
             ])->columns(12);
     }
 }

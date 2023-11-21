@@ -9,7 +9,7 @@
 namespace Callcocam\DbRestore\Helpers;
 
 use Callcocam\DbRestore\Models\AbstractModelRestore;
-use Callcocam\DbRestore\Models\Connection; 
+use Callcocam\DbRestore\Models\Connection;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Bus\Batch;
@@ -182,97 +182,93 @@ class RestoreHelper
         $default_value = data_get($column, 'default_value');
         $type = data_get($column, 'type');
         $relation = data_get($column, 'relation');
-        if (!empty($default_value)) {
-            $data = $default_value;
-        } else {
 
-            if ($relation) {
-                $val = data_get($chunk, $column_from);
-                //Conexao da tabela de destino
-                // $connectionName = $connectionName;
-                //Nome da tabela de destino que vamos recuperar o dado
-                $tableName = $relation->table_name;
-                //Coluna da tabela de destino que vamos recuperar o dado
-                //Geraralmente é o id, mas tambem pode ser o campo slug ou o campo que foi salvo o id da tabela de origem
-                $columnToName = $relation->column_to;
-                //Valor da coluna da tabela de origem que vamos usar para recuperar o dado
-                $columnFromName = $relation->column_from;
-                //Nome da coluna que vamos recuperar o dado
-                $columnValue = $relation->column_value;
-                //Se o valor da coluna da tabela de origem for igual ao valor da coluna da tabela de destino
-                if (Cache::has(sprintf('_%s_%s', $column_from, $val))) {
-                    $data = Cache::get(sprintf('_%s_%s', $column_from, $val));
-                } else {
-                    $data = DB::connection($connectionName)
-                        ->table($tableName)->where($columnToName, $val)->value($columnValue);
-                    Cache::forever(sprintf('_%s_%s', $column_from, $val), $data);
-                }
-                return  $data;
+        if ($relation) {
+            $val = data_get($chunk, $column_from);
+            //Conexao da tabela de destino
+            // $connectionName = $connectionName;
+            //Nome da tabela de destino que vamos recuperar o dado
+            $tableName = $relation->table_name;
+            //Coluna da tabela de destino que vamos recuperar o dado
+            //Geraralmente é o id, mas tambem pode ser o campo slug ou o campo que foi salvo o id da tabela de origem
+            $columnToName = $relation->column_to;
+            //Valor da coluna da tabela de origem que vamos usar para recuperar o dado
+            $columnFromName = $relation->column_from;
+            //Nome da coluna que vamos recuperar o dado
+            $columnValue = $relation->column_value;
+            //Se o valor da coluna da tabela de origem for igual ao valor da coluna da tabela de destino
+            if (Cache::has(sprintf('_%s_%s', $column_from, $val))) {
+                $data = Cache::get(sprintf('_%s_%s', $column_from, $val));
             } else {
-                switch ($type) {
-                    case 'date':
-                        return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+                $data = DB::connection($connectionName)
+                    ->table($tableName)->where($columnToName, $val)->value($columnValue);
+                Cache::forever(sprintf('_%s_%s', $column_from, $val), $data);
+            }
+            return  $data;
+        } else {
+            switch ($type) {
+                case 'date':
+                    return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
 
-                        break;
-                    case 'datetime':
-                        return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+                    break;
+                case 'datetime':
+                    return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
 
-                        break;
-                    case 'time':
-                        return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+                    break;
+                case 'time':
+                    return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
 
-                        break;
-                    case 'timestamp':
-                        return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+                    break;
+                case 'timestamp':
+                    return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
 
-                        break;
-                    case 'year':
-                        return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+                    break;
+                case 'year':
+                    return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
 
-                        break;
-                    case 'binary':
-                        return  data_get($chunk, $column_from, $default_value);
+                    break;
+                case 'binary':
+                    return  data_get($chunk, $column_from, $default_value);
 
-                        break;
-                    case 'boolean':
-                        return  data_get($chunk, $column_from, $default_value);
+                    break;
+                case 'boolean':
+                    return  data_get($chunk, $column_from, $default_value);
 
-                        break;
-                    case 'char':
-                        return  data_get($chunk, $column_from, $default_value);
+                    break;
+                case 'char':
+                    return  data_get($chunk, $column_from, $default_value);
 
-                        break;
-                    case 'text':
-                        return  data_get($chunk, $column_from, $default_value);
+                    break;
+                case 'text':
+                    return  data_get($chunk, $column_from, $default_value);
 
-                        break;
-                    case 'json':
-                        if ($data = data_get($chunk, $column_from, $default_value)) {
-                            $data = explode(',', data_get($chunk, $column_from, $default_value));
-                            return  json_encode($data);
-                        } else {
-                            return  null;
-                        }
+                    break;
+                case 'json':
+                    if ($data = data_get($chunk, $column_from, $default_value)) {
+                        $data = explode(',', data_get($chunk, $column_from, $default_value));
+                        return  json_encode($data);
+                    } else {
+                        return  null;
+                    }
 
-                        break;
-                    case 'integer':
-                        if (in_array($column_from, ['status'])) {
-                            $status = data_get($chunk, $column_from, $default_value);
-                            return  $status  ? 'published' : 'draft';
-                        } else {
-                            return  (int) data_get($chunk, $column_from, $default_value);
-                        }
+                    break;
+                case 'integer':
+                    if (in_array($column_from, ['status'])) {
+                        $status = data_get($chunk, $column_from, $default_value);
+                        return  $status  ? 'published' : 'draft';
+                    } else {
+                        return  (int) data_get($chunk, $column_from, $default_value);
+                    }
 
-                        break;
-                    default:
-                        return  data_get($chunk, $column_from, $default_value);
+                    break;
+                default:
+                    return  data_get($chunk, $column_from, $default_value);
 
-                        break;
-                }
+                    break;
             }
         }
 
-        return $data;
+        return null;
     }
 
     public static function afterGetChildresValues($record)
@@ -353,14 +349,19 @@ class RestoreHelper
         foreach ($rows as $row) {
             $data = [];
             foreach ($to_columns as $key => $column) {
-                if (in_array($key, config('tenant.default_tenant_columns'))) {
-                    $data[$key] =  static::getTenantId($row);
-                } elseif (in_array($key, ['user_id'])) {
-                    $data[$key] = DB::connection($connectionTo)->table(config('db-restore.tables.user', 'users'))
-                        ->where(config('db-restore.oldId', 'old_id'), data_get($row, 'user_id'))->value('id');
+
+                if ($default_value = data_get($column, 'default_value')) {
+                    $data[$key] =  $default_value;
                 } else {
-                    $value = static::getValues($connectionTo, $row, $column);
-                    $data[$key] =  $value == 'NULL' ? null : $value;
+                    if (in_array($key, config('tenant.default_tenant_columns'))) {
+                        $data[$key] =  static::getTenantId($row);
+                    } elseif (in_array($key, ['user_id'])) {
+                        $data[$key] = DB::connection($connectionTo)->table(config('db-restore.tables.user', 'users'))
+                            ->where(config('db-restore.oldId', 'old_id'), data_get($row, 'user_id'))->value('id');
+                    } else {
+                        $value = static::getValues($connectionTo, $row, $column);
+                        $data[$key] =  $value == 'NULL' ? null : $value;
+                    }
                 }
             }
 
@@ -413,7 +414,7 @@ class RestoreHelper
                     $childrenData['updated_at'] = now();
                     $childrenData[$children->join_from_column] = data_get($data, $children->join_to_column);
                     $childrenDatas[] = $childrenData;
-                } 
+                }
                 $data['childrens'] = $childrenDatas;
             }
             $values[] = $data;
