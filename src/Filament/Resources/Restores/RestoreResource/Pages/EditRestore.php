@@ -10,6 +10,8 @@ namespace Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource\Pages;
 
 use Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource;
 use Callcocam\DbRestore\Forms\Components\ConnectionField;
+use Callcocam\DbRestore\Forms\Components\ConnectionFromField;
+use Callcocam\DbRestore\Forms\Components\ConnectionToField;
 use Callcocam\DbRestore\Forms\Components\SelectTableField;
 use Callcocam\DbRestore\Forms\Components\SelectTableFromField;
 use Callcocam\DbRestore\Forms\Components\SelectTableToField;
@@ -47,24 +49,16 @@ class EditRestore extends EditRecord
     {
         return $form
             ->schema([
-                ConnectionField::make('connection_from_id')
-                    ->required()
-                    ->relationship(
-                        name: 'connectionFrom',
-                        titleAttribute: 'name',
-                    )
-                    ->columnSpan([
-                        'md' => '4'
-                    ]),
-                ConnectionField::make('connection_to_id')
+                ConnectionFromField::make('connection_from_id')
                     ->required() 
                     ->columnSpan([
                         'md' => '4'
-                    ])
-                    ->relationship(
-                        name: 'connectionTo',
-                        titleAttribute: 'name',
-                    ),
+                    ]),
+                ConnectionToField::make('connection_to_id')
+                    ->required() 
+                    ->columnSpan([
+                        'md' => '4'
+                    ]) ,
                 TextInputField::make('name')
                     ->required()
                     ->columnSpan([
@@ -76,7 +70,7 @@ class EditRestore extends EditRecord
                     ->columnSpan([
                         'md' => '4'
                     ]),
-                SelectTableToField::make('table_to', $this->record)
+                SelectTableToField::makeTable('table_to', $this->record)
                     ->required()
                     ->columnSpan([
                         'md' => '4'
@@ -90,7 +84,7 @@ class EditRestore extends EditRecord
                         'md' => '4'
                     ]),
                 $this->getSectionColumnsSchema($this->record, function ($record) {
-                    return $this->getColumnsSchemaForm($record, $record->table_from, $record->table_to);
+                    return $this->getColumnsSchemaForm($record );
                 })->visible(fn (Restore $record) => $record->table_to && $record->table_from),
                 $this->getSectionFiltersSchema($this->record)->visible(fn (Restore $record) => $record->table_to),
                 $this->getSectionOrderingsSchema($this->record)->visible(fn (Restore $record) => $record->table_from),

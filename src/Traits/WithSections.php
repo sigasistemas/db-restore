@@ -42,8 +42,7 @@ trait WithSections
     public function getSectionOrderingsSchema(AbstractModelRestore $record)
     {
         return  Forms\Components\Section::make($this->getTraduction('orderings', 'restore', 'form',  'label'))
-            ->description($this->getTraduction('orderings', 'restore', 'form',  'description'))
-            // ->visible(fn (Restore $record) => $record->table_from)
+            ->description($this->getTraduction('orderings', 'restore', 'form',  'description')) 
             ->collapsed()
             ->schema(function () use ($record) {
                 return  [
@@ -51,7 +50,7 @@ trait WithSections
                         ->relationship('orderings')
                         ->hiddenLabel()
                         ->schema(function () use ($record) {
-                            return $this->getOrderingsSchemaForm($record->connectionFrom, $record->table_from);
+                            return $this->getOrderingsSchemaForm($record->connectionFrom,   $record->table_from);
                         })
                         ->columns(12)
                         ->columnSpanFull()
@@ -67,7 +66,6 @@ trait WithSections
     {
         return Forms\Components\Section::make($this->getTraduction('filters', 'restore', 'form',  'label'))
             ->description($this->getTraduction('filters', 'restore', 'form',  'description'))
-            //  ->visible(fn (Restore $record) => $record->table_to)
             ->collapsed()
             ->schema(function () use ($record) {
                 return  [
@@ -75,13 +73,11 @@ trait WithSections
                         ->relationship('filters')
                         ->hiddenLabel()
                         ->schema(function () use ($record) {
-                            return $this->getFiltersSchemaForm($record->connectionTo, $record->table_to);
+                            return $this->getFiltersSchemaForm($record->connectionTo,  $record->table_to);
                         })
                         ->columns(12)
                         ->columnSpanFull()
                 ];
             });
     }
-
-    
 }

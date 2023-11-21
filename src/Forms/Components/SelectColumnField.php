@@ -14,6 +14,7 @@ use Callcocam\DbRestore\Models\AbstractModelRestore;
 use Callcocam\DbRestore\Models\Connection;
 use Callcocam\DbRestore\Traits\HasTraduction;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Get;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -23,12 +24,43 @@ class SelectColumnField extends Select
     use HasTraduction;
 
 
+    public static function makeFromOptions(string $name, AbstractModelRestore | null $record = null, $parent = null): static
+    {
+        $static = app(static::class, ['name' => $name]);
+        $static->configure()
+            ->label($static->getTraductionFormLabel($name))
+            ->placeholder($static->getTraductionFormPlaceholder($name))
+            ->options(function (Get $get) use ($record, $parent, $static) {
+                if ($record->connectionFrom)
+                    return $static->getColumnsOptions($record->connectionFrom, $get($parent));
+                return [];
+            });
+
+        return $static;
+    }
+
+    public static function makeToOptions(string $name, AbstractModelRestore | null $record = null, $parent = null): static
+    {
+        $static = app(static::class, ['name' => $name]);
+        $static->configure()
+            ->label($static->getTraductionFormLabel($name))
+            ->placeholder($static->getTraductionFormPlaceholder($name))
+            ->options(function (Get $get) use ($record, $parent, $static) {
+                if ($record->connectionTo)
+                    return $static->getColumnsOptions($record->connectionTo, $get($parent));
+                return [];
+            });
+
+        return $static;
+    }
+
+
     public static function make(string $name, AbstractModelRestore | null $record = null): static
     {
         $static = app(static::class, ['name' => $name]);
         $static->configure()
-        ->label($static->getTraductionFormLabel($name))
-        ->placeholder($static->getTraductionFormPlaceholder($name));
+            ->label($static->getTraductionFormLabel($name))
+            ->placeholder($static->getTraductionFormPlaceholder($name));
 
         return $static;
     }

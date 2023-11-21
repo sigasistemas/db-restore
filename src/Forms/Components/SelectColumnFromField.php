@@ -19,6 +19,7 @@ class SelectColumnFromField extends SelectColumnField
 
     public static function makeColumn(string $name, AbstractModelRestore | null $record = null, $label = null): static
     {
+       
         $static = app(static::class, ['name' => $name]);
         $static->configure()
             ->label($static->getTraductionFormLabel($name))

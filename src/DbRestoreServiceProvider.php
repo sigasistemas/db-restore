@@ -160,7 +160,10 @@ class DbRestoreServiceProvider extends PackageServiceProvider
             'create_relations_table',
             'create_columns_table',
             'create_filters_table',
-            'create_childrens_table'
+            'create_childrens_table',
+            'create_imports_table',
+            'create_exports_table',
+            'create_orderings_table',
         ];
     }
 }

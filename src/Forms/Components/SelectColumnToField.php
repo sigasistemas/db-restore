@@ -17,12 +17,12 @@ class SelectColumnToField extends SelectColumnField
     use HasTraduction;
 
     public static function makeColumn(string $name, AbstractModelRestore | null $record = null, $label = null): static
-    {
+    {  
         $static = app(static::class, ['name' => $name]);
         $static->configure()
             ->label($static->getTraductionFormLabel($label ?? $name))
             ->placeholder($static->getTraductionFormPlaceholder($label ?? $name))
-            ->options($static->getColumnsOptions($record->connectionTo, $record->table_to, 'to'));
+            ->options($static->getColumnsOptions($record->connectionTo,  $record->table_to, 'to'));
 
         return $static;
     }

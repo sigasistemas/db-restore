@@ -125,7 +125,7 @@ class EditExport extends EditRecord
                 TextInputField::make('file')
                     ->readOnly()
                     ->columnSpanFull(),
-                SelectTableToField::make('table_name')
+                SelectTableToField::makeTable('table_from', $this->record)
                     ->columnSpan([
                         'md' => 6
                     ])->required(),
@@ -156,8 +156,8 @@ class EditExport extends EditRecord
                     ->columnSpan([
                         'md' => 2
                     ]),
-                $this->getSectionColumnsSchema($this->record, function ($record) {
-                    return $this->getColumnsSchemaFileExportForm($record, $record->table_name);
+                $this->getSectionColumnsSchema($this->record, function ($record) {                    
+                    return $this->getColumnsSchemaFileExportForm($record );
                 }),
                 $this->getSectionFiltersSchema($this->record),
                 $this->getSectionOrderingsSchema($this->record),

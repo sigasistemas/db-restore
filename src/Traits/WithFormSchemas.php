@@ -9,6 +9,7 @@
 namespace Callcocam\DbRestore\Traits;
 
 use Callcocam\DbRestore\Forms\Components\SelectColumnField;
+use Callcocam\DbRestore\Forms\Components\SelectColumnFromField;
 use Callcocam\DbRestore\Forms\Components\SelectColumnToField;
 use Callcocam\DbRestore\Forms\Components\SelectTableField;
 use Callcocam\DbRestore\Forms\Components\SelectTableToField;
@@ -70,7 +71,7 @@ trait WithFormSchemas
         ];
     }
 
-    protected function getColumnsSchemaFileForm($record, $table_to, $relation = 'relation')
+    protected function getColumnsSchemaFileForm($record, $relation = 'relation')
     {
         $columns = [];
 
@@ -94,9 +95,7 @@ trait WithFormSchemas
                 return [];
             });
             $headers = array_filter($headers);
-            $columns[] = Forms\Components\Select::make('column_from')
-                ->label($this->getTraductionFormLabel('column_from'))
-                ->placeholder($this->getTraductionFormPlaceholder('column_from'))
+            $columns[] =  SelectColumnField::make('column_from')
                 ->options(function () use ($headers) {
                     return $headers;
                 })
@@ -105,7 +104,8 @@ trait WithFormSchemas
                 ]);
         }
 
-        $columns[] = $this->getColumnToSelect($record->connectionTo, $table_to)
+        $columns[] = SelectColumnToField::makeColumn('column_to', $record)
+            ->required()
             ->columnSpan([
                 'md' => '2',
             ]);
@@ -114,12 +114,10 @@ trait WithFormSchemas
     }
 
 
-    protected function getColumnsSchemaFileExportForm($record, $table_to, $relation = 'relation')
+    protected function getColumnsSchemaFileExportForm($record,  $relation = 'relation')
     {
         $columns = [];
-        $columns[] =   Forms\Components\Select::make('column_from')
-            ->label($this->getTraductionFormLabel('column_from'))
-            ->placeholder($this->getTraductionFormPlaceholder('column_from'))
+        $columns[] =    SelectColumnField::make('column_from')
             ->required()
             ->searchable()
             ->options(function () use ($record) {
@@ -141,7 +139,8 @@ trait WithFormSchemas
             ->columnSpan([
                 'md' => '2',
             ]);
-        $columns[] = $this->getColumnToSelect($record->connectionTo, $table_to)
+        $columns[] = SelectColumnFromField::makeColumn('column_to', $record)
+            ->required()
             ->columnSpan([
                 'md' => '2',
             ]);
@@ -149,27 +148,21 @@ trait WithFormSchemas
         return  $this->getColumnsSchema($record, $columns, $relation);
     }
 
-    protected function getColumnsSchemaForm($record, $table_from, $table_to, $relation = 'relation')
+    protected function getColumnsSchemaForm($record, $relation = 'relation')
     {
         $columns = [];
 
         if ($record->connectionFrom) {
-            $columns[] = SelectColumnField::make('column_from')
+            $columns[] = SelectColumnFromField::makeColumn('column_from', $record)
                 ->required()
-                ->options(function () use ($record, $table_from) {
-                    if ($record->connectionFrom) {
-                        return $this->getColumns($record->connectionFrom, $table_from, 'from');
-                    }
-
-                    return [];
-                })
                 ->columnSpan([
                     'md' => '2',
                 ]);
         }
 
         if ($record->connectionTo) {
-            $columns[] =  $this->getColumnToSelect($record->connectionTo, $table_to)
+            $columns[] =  SelectColumnToField::makeColumn('column_to', $record)
+                ->required()
                 ->columnSpan([
                     'md' => '2',
                 ]);
@@ -223,7 +216,7 @@ trait WithFormSchemas
                 'md' => '3',
             ]);
 
-        $columns[] = SelectColumnField::make('type') 
+        $columns[] = SelectColumnField::make('type')
             ->required()
             ->options([
                 'string' => 'String',
@@ -256,7 +249,7 @@ trait WithFormSchemas
                 ->columnSpan([
                     'md' => '3',
                 ]),
-            SelectColumnField::make('column')
+            SelectColumnField::make('column_to')
                 ->required()
                 ->options(function () use ($connection, $table) {
                     if ($connection) {
@@ -352,19 +345,6 @@ trait WithFormSchemas
         ];
     }
 
-    protected function getColumnToSelect($connectionTo, $table_to)
-    {
-
-        return SelectColumnField::make('column_to')
-            ->required()
-            ->options(function () use ($connectionTo, $table_to) {
-                if ($connectionTo) {
-                    return $this->getColumns($connectionTo, $table_to, 'to');
-                }
-
-                return [];
-            });
-    }
 
     protected function getsearchDefaultValueSchemaForm($column)
     {
@@ -386,7 +366,7 @@ trait WithFormSchemas
                             ->columnSpan([
                                 'md' => '3',
                             ]),
-                        SelectColumnField::make('table_name')
+                        SelectColumnField::make('table_from')
                             ->live()
                             ->required()
                             ->options(function (Get $get) {
@@ -403,7 +383,7 @@ trait WithFormSchemas
                                 if ($connectionTo = Cache::rememberForever($connectionKey, function () use ($connectionKey) {
                                     return Connection::find($connectionKey);
                                 })) {
-                                    return $this->getColumns($connectionTo, $get('table_name'), 'to');
+                                    return $this->getColumns($connectionTo, $get('table_from'), 'to');
                                 }
 
                                 return [];
@@ -419,7 +399,7 @@ trait WithFormSchemas
                                 if ($connectionTo = Cache::rememberForever($connectionKey, function () use ($connectionKey) {
                                     return Connection::find($connectionKey);
                                 })) {
-                                    return $this->getColumns($connectionTo, $get('table_name'), 'to');
+                                    return $this->getColumns($connectionTo, $get('table_from'), 'to');
                                 }
 
                                 return [];
@@ -439,7 +419,7 @@ trait WithFormSchemas
                                     return Connection::find($connectionKey);
                                 })) {
                                     return DB::connection(RestoreHelper::getConnectionCloneOptions($connectionTo))
-                                        ->table($get('table_name'))
+                                        ->table($get('table_from'))
                                         ->whereNotNull($get('column_label'))
                                         ->pluck($get('column_label'), $get('column_key'))->toArray();
                                 }

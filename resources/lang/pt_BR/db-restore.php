@@ -215,6 +215,10 @@ return [
                 'label' => 'Buscar o valor da coluna',
                 'placeholder' => 'Selecione',
             ],
+            'relation_type' => [
+                'label' => 'Tipo de relação',
+                'placeholder' => 'Selecione o tipo de relação',
+            ],
             'childrens' => [
                 'label' => 'Selecionar filhos',
                 'description' => 'Configure os filhos para restaurar',

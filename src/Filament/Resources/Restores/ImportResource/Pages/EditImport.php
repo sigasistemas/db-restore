@@ -9,18 +9,17 @@
 namespace Callcocam\DbRestore\Filament\Resources\Restores\ImportResource\Pages;
 
 use Callcocam\DbRestore\Filament\Resources\Restores\ImportResource;
-use Callcocam\DbRestore\Forms\Components\ConnectionField;
 use Callcocam\DbRestore\Forms\Components\ConnectionToField;
+use Callcocam\DbRestore\Forms\Components\SelectColumnField;
 use Callcocam\DbRestore\Forms\Components\SelectColumnToField;
 use Callcocam\DbRestore\Forms\Components\SelectTableField;
 use Callcocam\DbRestore\Forms\Components\SelectTableFromField;
 use Callcocam\DbRestore\Forms\Components\SelectTableToField;
+use Callcocam\DbRestore\Forms\Components\TextareaField;
 use Callcocam\DbRestore\Forms\Components\TextInputField;
 use Callcocam\DbRestore\Models\Import;
 use Callcocam\DbRestore\Helpers\RestoreHelper;
 use Callcocam\DbRestore\Models\Children;
-use Callcocam\DbRestore\Models\Column;
-use Callcocam\DbRestore\Models\Connection;
 use Callcocam\DbRestore\Traits\HasStatusColumn;
 use Callcocam\DbRestore\Traits\HasTraduction;
 use Callcocam\DbRestore\Traits\HasUploadFormField;
@@ -31,12 +30,14 @@ use Callcocam\DbRestore\Traits\WithTables;
 use Filament\Actions;
 use Filament\Forms\Form;
 use Filament\Forms;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Bus\Batch;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class EditImport extends EditRecord
@@ -123,7 +124,7 @@ class EditImport extends EditRecord
                     ->columnSpan([
                         'md' => 4
                     ]),
-                SelectTableToField::makeTable('table_name', $this->record)
+                SelectTableToField::makeTable('table_to', $this->record)
                     ->columnSpan([
                         'md' => 6
                     ]),
@@ -159,14 +160,14 @@ class EditImport extends EditRecord
                         // $set('columns', []);
                     }),
                 $this->getSectionColumnsSchema($this->record, function ($record) {
-                    return $this->getColumnsSchemaFileForm($record, $record->table_name);
-                })->visible(fn (Import $record) => $record->table_name && $record->file),
-                $this->getSectionFiltersSchema($this->record)->visible(fn (Import $record) => $record->table_name && $record->file),
-                $this->getSectionOrderingsSchema($this->record)->visible(fn (Import $record) => $record->table_name && $record->file),
+                    return $this->getColumnsSchemaFileForm($record);
+                })->visible(fn (Import $record) => $record->table_to && $record->file),
+                $this->getSectionFiltersSchema($this->record)->visible(fn (Import $record) => $record->table_to && $record->file),
+                $this->getSectionOrderingsSchema($this->record)->visible(fn (Import $record) => $record->table_to && $record->file),
 
                 Forms\Components\Section::make($this->getTraduction('childrens', 'restore', 'form',  'label'))
                     ->description($this->getTraduction('childrens', 'restore', 'form',  'description'))
-                    ->visible(fn (Import $record) => $record->table_name && $record->file)
+                    ->visible(fn (Import $record) => $record->table_to && $record->file)
                     ->collapsed()
                     ->schema(function (Import $record) {
                         return  [
@@ -180,7 +181,7 @@ class EditImport extends EditRecord
                                             ->columnSpan([
                                                 'md' => 2
                                             ])->required(),
-                                        SelectTableFromField::make('table_from')
+                                        SelectTableFromField::makeTable('table_from', $record)
                                             ->columnSpan([
                                                 'md' => 2
                                             ]),
@@ -195,14 +196,7 @@ class EditImport extends EditRecord
                                             ->columnSpan([
                                                 'md' => 3
                                             ])->required(),
-                                        SelectTableField::make('join_to_column')
-                                            ->options(function () use ($record) {
-                                                $table = $record->table_name;
-                                                if ($connectionTo =  $record->connectionTo) {
-                                                    return $this->getColumns($connectionTo, $table, 'to');
-                                                }
-                                                return [];
-                                            })
+                                        SelectColumnToField::makeColumn('join_to_column', $record)
                                             ->columnSpan([
                                                 'md' => 3
                                             ]),
@@ -210,9 +204,16 @@ class EditImport extends EditRecord
                                             ->columnSpan([
                                                 'md' => 2
                                             ]),
-                                        $this->getSectionColumnsSchema($record, function ($record) {
-                                            return $this->getColumnsSchemaFileChildrensForm($record, $record->table_to);
-                                        })->visible(fn (Children $record) => $record->table_to),
+                                        Section::make()
+                                            ->schema(function (Children  $children) use ($record) {
+                                                $children->file = $record->file;
+                                                $children->connectionTo = $record->connectionTo;
+                                                return [
+                                                    $this->getSectionColumnsSchema($children, function ($record) {
+                                                        return $this->getColumnsSchemaFileChildrensForm($record);
+                                                    })->visible(fn (Children $record) => $record->table_to)
+                                                ];
+                                            }),
 
                                     ];
                                 })
@@ -221,15 +222,12 @@ class EditImport extends EditRecord
                         ];
                     }),
                 static::getStatusFormRadioField(),
-                Forms\Components\Textarea::make('description')
-                    ->label($this->getTraductionFormLabel('description'))
-                    ->placeholder($this->getTraductionFormPlaceholder('description'))
-                    ->columnSpanFull()
+                TextareaField::makeText('description')
             ])->columns(12);
     }
 
 
-    protected function getColumnsSchemaFileChildrensForm($record, $table_to, $relation = 'relation')
+    protected function getColumnsSchemaFileChildrensForm($record, $relation = 'relation')
     {
         $columns = [];
 
@@ -241,9 +239,7 @@ class EditImport extends EditRecord
 
             $headers = array_filter($headers);
 
-            $columns[] = Forms\Components\Select::make('column_from')
-                ->label($this->getTraductionFormLabel('column_from'))
-                ->placeholder($this->getTraductionFormPlaceholder('column_from'))
+            $columns[] = SelectColumnField::make('column_from')
                 ->options(function () use ($headers) {
                     return $headers;
                 })
@@ -251,8 +247,10 @@ class EditImport extends EditRecord
                     'md' => '2',
                 ]);
         }
-
-        $columns[] = SelectColumnToField::make('column_to')
+        $columns[] = SelectColumnField::make('column_to', $record)
+            ->options(function () use ($record ) {
+                return DB::connection(RestoreHelper::getConnectionCloneOptions($record->connectionTo))->table($record->table_to)->pluck('name', 'id')->toArray();
+            })
             ->required()->columnSpan([
                 'md' => '2',
             ]);

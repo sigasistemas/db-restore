@@ -8,10 +8,15 @@
 
 namespace Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource\RelationManagers;
 
+use Callcocam\DbRestore\Forms\Components\SelectColumnField;
+use Callcocam\DbRestore\Forms\Components\SelectTableFromField;
+use Callcocam\DbRestore\Forms\Components\SelectTableToField;
+use Callcocam\DbRestore\Forms\Components\TextInputField;
 use Callcocam\DbRestore\Models\Children;
 use Callcocam\DbRestore\Traits\HasTraduction;
 use Callcocam\DbRestore\Traits\WithColumns;
 use Callcocam\DbRestore\Traits\WithFormSchemas;
+use Callcocam\DbRestore\Traits\WithSections;
 use Callcocam\DbRestore\Traits\WithTables;
 use Filament\Forms;
 use Filament\Forms\Components\Group;
@@ -23,7 +28,7 @@ use Filament\Tables\Table;
 
 class ChildrensRelationManager extends RelationManager
 {
-    use WithColumns, WithFormSchemas, HasTraduction, WithTables;
+    use WithColumns, WithFormSchemas, HasTraduction, WithTables, WithSections;
 
     protected static string $relationship = 'childrens';
 
@@ -67,17 +72,13 @@ class ChildrensRelationManager extends RelationManager
         $ownerRecord = $record;
 
         return [
-            Forms\Components\TextInput::make('name')
-                ->label($this->getTraductionFormLabel('name'))
-                ->placeholder($this->getTraductionFormPlaceholder('name'))
+            TextInputField::make('name')
                 ->required()
                 ->columnSpan([
                     'md' => '8'
                 ]),
             // 'one-to-one', 'one-to-many', 'one-to-many-inverse','polymorphic'
-            Forms\Components\Select::make('relation_type')
-                ->label($this->getTraductionFormLabel('type'))
-                ->placeholder($this->getTraductionFormPlaceholder('type'))
+            SelectColumnField::make('relation_type')
                 ->required()
                 ->options([
                     'one-to-one' => $this->getTraduction('one-to-one', 'restore', 'form', 'label'),
@@ -88,48 +89,29 @@ class ChildrensRelationManager extends RelationManager
                 ->columnSpan([
                     'md' => '4'
                 ]),
-            Forms\Components\Select::make('table_from')
-                ->label($this->getTraductionFormLabel('table_from'))
-                ->placeholder($this->getTraductionFormPlaceholder('table_from'))
+            SelectTableFromField::makeTable('table_from', $record)
                 ->required()
                 ->live()
-                ->options($this->getTablesOptions($ownerRecord->connectionTo, 'from'))
                 ->columnSpan([
                     'md' => '3'
                 ]),
-            Forms\Components\Select::make('join_from_column')
-                ->label($this->getTraductionFormLabel('join_from_column'))
-                ->placeholder($this->getTraductionFormPlaceholder('join_from_column'))
-                ->required()
-                ->options(function (Get $get) use ($ownerRecord) {
-                    if ($ownerRecord->connectionFrom)
-                        return $this->getColumns($ownerRecord->connectionFrom, $get('table_from'));
-                    return [];
-                })
+            SelectColumnField::makeFromOptions('join_from_column', $ownerRecord, 'table_from')
+                ->required() 
                 ->columnSpan([
                     'md' => '3'
                 ]),
-            Forms\Components\Select::make('table_to')
-                ->label($this->getTraductionFormLabel('table_to'))
-                ->placeholder($this->getTraductionFormPlaceholder('table_to'))
+            SelectTableToField::makeTable('table_to', $record)
                 ->required()
                 ->live()
-                ->options($this->getTablesOptions($ownerRecord->connectionTo, 'to'))
                 ->columnSpan([
                     'md' => '3'
                 ]),
-            Forms\Components\Select::make('join_to_column')
-                ->label($this->getTraductionFormLabel('join_to_column'))
-                ->placeholder($this->getTraductionFormPlaceholder('join_to_column'))
+            SelectColumnField::makeToOptions('join_to_column', $ownerRecord, 'table_to')
                 ->required()
-                ->options(function (Get $get) use ($ownerRecord) {
-                    if ($ownerRecord->connectionTo)
-                        return $this->getColumns($ownerRecord->connectionTo, $get('table_to'));
-                    return [];
-                })
                 ->columnSpan([
                     'md' => '3'
                 ]),
+
             Forms\Components\Section::make()
                 ->visible(fn (Children | null $record = null) => $record)
                 ->schema([
@@ -146,51 +128,16 @@ class ChildrensRelationManager extends RelationManager
                                     ->relationship('columns')
                                     ->hiddenLabel()
                                     ->schema(function () use ($ownerRecord, $record) {
-                                        return $this->getColumnsSchemaForm($ownerRecord, $record->table_from, $record->table_to);
+                                        $record->connectionTo = $ownerRecord->connectionTo;
+                                        $record->connectionFrom = $ownerRecord->connectionFrom;
+                                        return $this->getColumnsSchemaForm($record);
                                     })
                                     ->columns(12)
                                     ->columnSpanFull()
                             ];
                         }),
-                    Forms\Components\Section::make($this->getTraduction('filters', 'restore', 'form',  'label'))
-                        ->description($this->getTraduction('filters', 'restore', 'form',  'description'))
-                        ->visible($ownerRecord->table_from)
-                        ->collapsed()
-                        ->schema(function (Children | null $record = null) use ($ownerRecord) {
-                            if (!$record) {
-                                return [];
-                            }
-                            return  [
-                                Forms\Components\Repeater::make('filters')
-                                    ->relationship('filters')
-                                    ->hiddenLabel()
-                                    ->schema(function () use ($ownerRecord) {
-                                        return $this->getFiltersSchemaForm($ownerRecord->connectionFrom, $ownerRecord->table_from);
-                                    })
-                                    ->columns(12)
-                                    ->columnSpanFull()
-                            ];
-                        }),
-
-                    Forms\Components\Section::make($this->getTraduction('orderings', 'restore', 'form',  'label'))
-                        ->description($this->getTraduction('orderings', 'restore', 'form',  'description'))
-                        ->visible($ownerRecord->table_from)
-                        ->collapsed()
-                        ->schema(function (Children | null $record = null) use ($ownerRecord) {
-                            if (!$record) {
-                                return [];
-                            }
-                            return  [
-                                Forms\Components\Repeater::make('orderings')
-                                    ->relationship('orderings')
-                                    ->hiddenLabel()
-                                    ->schema(function () use ($ownerRecord) {
-                                        return $this->getOrderingsSchemaForm($ownerRecord->connectionFrom, $ownerRecord->table_from);
-                                    })
-                                    ->columns(12)
-                                    ->columnSpanFull()
-                            ];
-                        })
+                    $this->getSectionFiltersSchema($ownerRecord)->visible($ownerRecord->table_to),
+                    $this->getSectionOrderingsSchema($ownerRecord)->visible($ownerRecord->table_from),
                 ]),
 
         ];
