@@ -62,18 +62,24 @@ trait WithSections
      * @param AbstractModelRestore $record
      * @return Forms\Components\Section
      */
-    public function getSectionFiltersSchema(AbstractModelRestore $record)
+    public function getSectionFiltersSchema(AbstractModelRestore $record, $connectionTo = null, $tableTo = null)
     {
         return Forms\Components\Section::make($this->getTraduction('filters', 'restore', 'form',  'label'))
             ->description($this->getTraduction('filters', 'restore', 'form',  'description'))
             ->collapsed()
-            ->schema(function () use ($record) {
+            ->schema(function () use ($record, $connectionTo, $tableTo) {
                 return  [
                     Forms\Components\Repeater::make('filters')
                         ->relationship('filters')
                         ->hiddenLabel()
-                        ->schema(function () use ($record) {
-                            return $this->getFiltersSchemaForm($record->connectionTo,  $record->table_to);
+                        ->schema(function () use ($record, $connectionTo, $tableTo) {
+                            if (!$connectionTo) {
+                                $connectionTo = $record->connectionTo;
+                            }
+                            if (!$tableTo) {
+                                $tableTo = $record->table_to;
+                            }
+                            return $this->getFiltersSchemaForm($connectionTo,  $tableTo);
                         })
                         ->columns(12)
                         ->columnSpanFull()

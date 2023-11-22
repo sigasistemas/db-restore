@@ -128,15 +128,16 @@ class ChildrensRelationManager extends RelationManager
                                     ->relationship('columns')
                                     ->hiddenLabel()
                                     ->schema(function () use ($ownerRecord, $record) {
-                                        $record->connectionTo = $ownerRecord->connectionTo;
-                                        $record->connectionFrom = $ownerRecord->connectionFrom;
-                                        return $this->getColumnsSchemaForm($record);
+                                        $cloneRecord = clone $record;
+                                        $cloneRecord->connectionTo = $ownerRecord->connectionTo;
+                                        $cloneRecord->connectionFrom = $ownerRecord->connectionFrom;
+                                        return $this->getColumnsSchemaForm($cloneRecord);
                                     })
                                     ->columns(12)
                                     ->columnSpanFull()
                             ];
                         }),
-                    $this->getSectionFiltersSchema($ownerRecord)->visible($ownerRecord->table_to),
+                    $this->getSectionFiltersSchema($ownerRecord, $ownerRecord->connectionFrom, $ownerRecord->table_from)->visible($ownerRecord->table_from),
                     $this->getSectionOrderingsSchema($ownerRecord)->visible($ownerRecord->table_from),
                 ]),
 

@@ -140,13 +140,13 @@ class RestoreHelper
 
         if ($filters) {
             foreach ($filters as $filter) {
-                static::queryFilters($query, $filter->column, $filter->operator, $filter->value);
+                static::queryFilters($query, $filter->column_to, $filter->operator, $filter->value);
             }
         }
 
         if ($orderings) {
             foreach ($orderings as $ordering) {
-                $query->orderBy($ordering->column, $ordering->direction);
+                $query->orderBy($ordering->column_to, $ordering->direction);
             }
         }
 
