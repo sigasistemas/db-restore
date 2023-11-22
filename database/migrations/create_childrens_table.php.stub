@@ -29,9 +29,14 @@ return new class extends Migration
             $table->string('table_to')->comment('Tabela de destino');
             $table->string('join_from_column')->nullable()->comment('Coluna de junção da tabela de origem');
             $table->string('join_to_column')->nullable()->comment('Coluna de junção da tabela de destino'); 
-            $table->enum('type', ['one-to-one', 'one-to-many', 'one-to-many-inverse','polymorphic'])->default('one-to-one')->comment('Tipo de relacionamento');
+            $table->enum('relation_type', ['one-to-one', 'one-to-many', 'one-to-many-inverse','polymorphic'])->default('one-to-one')->comment('Tipo de relacionamento');
             $table->enum('status', ['draft', 'published'])->default('published')->comment('Status da restauração');
             $table->text('description')->nullable()->comment('Descrição da restauração');
+             if (config('db-restore.incrementing', false)) {
+                $table->morphs('childrenable');
+            } else {
+                $table->ulidMorphs('childrenable');
+            } 
             $table->timestamps();
             $table->softDeletes();
         });
