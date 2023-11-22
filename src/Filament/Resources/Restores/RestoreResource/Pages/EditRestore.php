@@ -12,6 +12,7 @@ use Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource;
 use Callcocam\DbRestore\Forms\Components\ConnectionField;
 use Callcocam\DbRestore\Forms\Components\ConnectionFromField;
 use Callcocam\DbRestore\Forms\Components\ConnectionToField;
+use Callcocam\DbRestore\Forms\Components\SelectColumnField;
 use Callcocam\DbRestore\Forms\Components\SelectTableField;
 use Callcocam\DbRestore\Forms\Components\SelectTableFromField;
 use Callcocam\DbRestore\Forms\Components\SelectTableToField;
@@ -50,15 +51,15 @@ class EditRestore extends EditRecord
         return $form
             ->schema([
                 ConnectionFromField::make('connection_from_id')
-                    ->required() 
+                    ->required()
                     ->columnSpan([
                         'md' => '4'
                     ]),
                 ConnectionToField::make('connection_to_id')
-                    ->required() 
+                    ->required()
                     ->columnSpan([
                         'md' => '4'
-                    ]) ,
+                    ]),
                 TextInputField::make('name')
                     ->required()
                     ->columnSpan([
@@ -68,12 +69,12 @@ class EditRestore extends EditRecord
                 SelectTableFromField::makeTable('table_from', $this->record)
                     ->required()
                     ->columnSpan([
-                        'md' => '4'
+                        'md' => '3'
                     ]),
                 SelectTableToField::makeTable('table_to', $this->record)
                     ->required()
                     ->columnSpan([
-                        'md' => '4'
+                        'md' => '3'
                     ]),
                 SelectTableField::make('restore_model_id')
                     ->relationship(
@@ -81,10 +82,20 @@ class EditRestore extends EditRecord
                         titleAttribute: 'name'
                     )
                     ->columnSpan([
-                        'md' => '4'
+                        'md' => '3'
+                    ]),
+                SelectColumnField::make('type')
+                    ->options([
+                        'duplicar' => 'Duplicar',
+                        'excluir' => 'Excluir',
+                        'ignorar' => 'Ignorar',
+                    ])
+                    ->required()
+                    ->columnSpan([
+                        'md' => '3'
                     ]),
                 $this->getSectionColumnsSchema($this->record, function ($record) {
-                    return $this->getColumnsSchemaForm($record );
+                    return $this->getColumnsSchemaForm($record);
                 })->visible(fn (Restore $record) => $record->table_to && $record->table_from),
                 $this->getSectionFiltersSchema($this->record)->visible(fn (Restore $record) => $record->table_to),
                 $this->getSectionOrderingsSchema($this->record)->visible(fn (Restore $record) => $record->table_from),

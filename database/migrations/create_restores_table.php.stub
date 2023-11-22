@@ -27,6 +27,7 @@ return new class extends Migration
                 $table->ulid('connection_from_id')->nullable();
                 $table->ulid('restore_model_id')->nullable();
             }
+            $table->enum('type', ['duplicar', 'excluir', 'ignorar'])->default('ignorar')->comment('Tipo da restauração');
             $table->string('name', 255)->nullable()->comment('Nome da restauração, serve como apelido ex: Tenant, User, etc...');
             $table->string('slug', 255)->nullable()->comment('Slug da restauração, serve como apelido ex: tenant, user, etc...');
             $table->string('table_from', 255)->nullable()->comment('Nome da tabela de origem da restauração');

@@ -96,7 +96,7 @@ class ChildrensRelationManager extends RelationManager
                     'md' => '3'
                 ]),
             SelectColumnField::makeFromOptions('join_from_column', $ownerRecord, 'table_from')
-                ->required() 
+                ->required()
                 ->columnSpan([
                     'md' => '3'
                 ]),
@@ -114,32 +114,34 @@ class ChildrensRelationManager extends RelationManager
 
             Forms\Components\Section::make()
                 ->visible(fn (Children | null $record = null) => $record)
-                ->schema([
-                    Forms\Components\Section::make($this->getTraduction('columns', 'restore', 'form',  'label'))
-                        ->description($this->getTraduction('columns', 'restore', 'form', 'description'))
-                        ->visible($ownerRecord->table_from && $ownerRecord->table_to)
-                        ->collapsed()
-                        ->schema(function (Children | null $record = null) use ($ownerRecord) {
-                            if (!$record) {
-                                return [];
-                            }
-                            return  [
-                                Forms\Components\Repeater::make('columns')
-                                    ->relationship('columns')
-                                    ->hiddenLabel()
-                                    ->schema(function () use ($ownerRecord, $record) {
-                                        $cloneRecord = clone $record;
-                                        $cloneRecord->connectionTo = $ownerRecord->connectionTo;
-                                        $cloneRecord->connectionFrom = $ownerRecord->connectionFrom;
-                                        return $this->getColumnsSchemaForm($cloneRecord);
-                                    })
-                                    ->columns(12)
-                                    ->columnSpanFull()
-                            ];
-                        }),
-                    $this->getSectionFiltersSchema($ownerRecord, $ownerRecord->connectionFrom, $ownerRecord->table_from)->visible($ownerRecord->table_from),
-                    $this->getSectionOrderingsSchema($ownerRecord)->visible($ownerRecord->table_from),
-                ]),
+                ->schema(function (Children | null $record = null) use ($ownerRecord) {
+                    return [
+                        Forms\Components\Section::make($this->getTraduction('columns', 'restore', 'form',  'label'))
+                            ->description($this->getTraduction('columns', 'restore', 'form', 'description'))
+                            ->visible($ownerRecord->table_from && $ownerRecord->table_to)
+                            ->collapsed()
+                            ->schema(function (Children | null $record = null) use ($ownerRecord) {
+                                if (!$record) {
+                                    return [];
+                                }
+                                return  [
+                                    Forms\Components\Repeater::make('columns')
+                                        ->relationship('columns')
+                                        ->hiddenLabel()
+                                        ->schema(function () use ($ownerRecord) {
+                                            $cloneRecord = clone $ownerRecord;
+                                            $cloneRecord->connectionTo = $ownerRecord->connectionTo;
+                                            $cloneRecord->connectionFrom = $ownerRecord->connectionFrom;
+                                            return $this->getColumnsSchemaForm($cloneRecord);
+                                        })
+                                        ->columns(12)
+                                        ->columnSpanFull()
+                                ];
+                            }),
+                        $this->getSectionFiltersSchema($ownerRecord, $ownerRecord->connectionFrom, $record->table_from)->visible($ownerRecord->table_from),
+                        $this->getSectionOrderingsSchema($ownerRecord)->visible($ownerRecord->table_from),
+                    ];
+                }),
 
         ];
     }

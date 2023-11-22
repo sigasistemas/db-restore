@@ -138,6 +138,31 @@ class RestoreHelper
         $query = DB::connection($from_connection)
             ->table($from_table);
 
+        $type = $restore->type;
+        switch ($type) {
+            case 'ignorar':
+                $toConnection = RestoreHelper::getConnectionCloneOptions($restore->connectionTo);
+                $tableName = $restore->table_to;
+                $others = DB::connection($toConnection)
+                    ->table($tableName)->get()->pluck('old_id')->toArray();
+                $others = array_filter($others);
+                if ($others) {
+                    $query->whereNotIn('id', $others);
+                }
+                break;
+            case 'excluir':
+                $others = DB::connection($from_connection)
+                    ->table($from_table)->get()->pluck('id')->toArray();
+                $others = array_filter($others);
+                if ($others) {
+                    $toConnection = RestoreHelper::getConnectionCloneOptions($restore->connectionTo);
+                    $tableName = $restore->table_to;
+                    DB::connection($toConnection)->whereNotIn('old_id', $others)
+                        ->table($tableName)->delete();
+                }
+                break;
+        }
+
         if ($filters) {
             foreach ($filters as $filter) {
                 static::queryFilters($query, $filter->column_to, $filter->operator, $filter->value);
@@ -446,7 +471,7 @@ class RestoreHelper
                 $columnFromName = $relation->column_from;
                 //Nome da coluna que vamos recuperar o dado
                 $columnValue = $relation->column_value;
-                if($connectionName instanceof Connection){
+                if ($connectionName instanceof Connection) {
                     $connectionName = RestoreHelper::getConnectionCloneOptions($connectionName);
                 }
                 //Se o valor da coluna da tabela de origem for igual ao valor da coluna da tabela de destino
