@@ -129,7 +129,7 @@ class RestoreHelper
         })->toArray();
     }
 
-    public static function getFromDatabaseRows(AbstractModelRestore $restore, $from_table, $filters = null, $orderings = null)
+    public static function getFromDatabaseRows(AbstractModelRestore $restore, $from_table, $filters = null, $orderings = null, $tableTo = null)
     {
         $connection = $restore->connectionFrom;
 
@@ -142,7 +142,7 @@ class RestoreHelper
         switch ($type) {
             case 'ignorar':
                 $toConnection = RestoreHelper::getConnectionCloneOptions($restore->connectionTo);
-                $tableName = $restore->table_to;
+                $tableName = $tableTo ?? $restore->table_to;
                 $others = DB::connection($toConnection)
                     ->table($tableName)->get()->pluck('old_id')->toArray();
                 $others = array_filter($others);
@@ -154,11 +154,11 @@ class RestoreHelper
                 $others = DB::connection($from_connection)
                     ->table($from_table)->get()->pluck('id')->toArray();
                 $others = array_filter($others);
-                if ($others) {
+                if ($others) { 
                     $toConnection = RestoreHelper::getConnectionCloneOptions($restore->connectionTo);
-                    $tableName = $restore->table_to;
-                    DB::connection($toConnection)->whereNotIn('old_id', $others)
-                        ->table($tableName)->delete();
+                    $tableName = $tableTo ?? $restore->table_to;
+                    DB::connection($toConnection)->table($tableName)->whereIn('old_id', $others)
+                        ->delete();
                 }
                 break;
         }
@@ -208,19 +208,28 @@ class RestoreHelper
         $type = data_get($column, 'type');
         $relation = data_get($column, 'relation');
 
+        if (in_array($column_from, ['slug'])) {
+            if (!data_get($chunk, $column_from)) {
+                if ($default_value) {
+                    return Str::of(data_get($chunk, $default_value))->slug()->append('-' . data_get($chunk, 'id'))->__toString();
+                }
+                return Str::of(data_get($chunk, 'name'))->slug()->append('-' . data_get($chunk, 'id'))->__toString();
+            }
+        }
+
         if ($relation) {
             $val = data_get($chunk, $column_from);
             //Conexao da tabela de destino
             // $connectionName = $connectionName;
             //Nome da tabela de destino que vamos recuperar o dado
-            $tableName = $relation->table_name;
+            $tableName = $relation->table_from;
             //Coluna da tabela de destino que vamos recuperar o dado
             //Geraralmente é o id, mas tambem pode ser o campo slug ou o campo que foi salvo o id da tabela de origem
-            $columnToName = $relation->column_to;
+            $columnToName = $relation->column_from;
             //Valor da coluna da tabela de origem que vamos usar para recuperar o dado
-            $columnFromName = $relation->column_from;
+            // $columnFromName = $relation->column_from;
             //Nome da coluna que vamos recuperar o dado
-            $columnValue = $relation->column_value;
+            $columnValue = $relation->column_value; 
             //Se o valor da coluna da tabela de origem for igual ao valor da coluna da tabela de destino
             if (Cache::has(sprintf('_%s_%s', $column_from, $val))) {
                 $data = Cache::get(sprintf('_%s_%s', $column_from, $val));
@@ -315,8 +324,8 @@ class RestoreHelper
                 $from_columns = static::getColumsSchema($columns, $from_table, 'column_from');
 
                 $filterList = $children->filters->filter(fn ($filter) => $filter->type == 'list')->all();
-
-                $rows = static::getFromDatabaseRows($record, $from_table, $filterList);
+ 
+                $rows = static::getFromDatabaseRows($record, $from_table, $filterList, null, $children->table_to);
 
                 static::beforeRemoveFilters($children);
 
@@ -324,10 +333,10 @@ class RestoreHelper
 
                 $to_columns = static::getColumsSchema($columns, $to_table, 'column_to');
 
-                $chunks = array_chunk($rows, 1000);
-
+                $chunks = array_chunk($rows, 1000); 
+                
                 foreach ($chunks as $chunk) {
-                    $batch->add(new \Callcocam\DbRestore\Jobs\DbRestoreChidrenJob($children, $chunk, $to_columns, $from_columns));
+                    $batch->add(new \Callcocam\DbRestore\Jobs\DbRestoreChidrenJob($children, $chunk, $to_columns, $from_columns, $record));
                 }
             });
         }

@@ -29,7 +29,7 @@ class DbRestoreChidrenJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public Children $record, public $chunk, public $to_columns, public $from_columns)
+    public function __construct(public Children $record, public $chunk, public $to_columns, public $from_columns, public $restore) 
     {
         //
     }
@@ -39,12 +39,12 @@ class DbRestoreChidrenJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $fromConnection = RestoreHelper::getConnectionCloneOptions($this->record->restore->connectionTo);
+        $fromConnection = RestoreHelper::getConnectionCloneOptions($this->restore->connectionTo);
 
         $model = DB::connection($fromConnection)
             ->table($this->record->table_to);
 
-        $values = RestoreHelper::getDataValues($this->chunk, $this->to_columns, $fromConnection, $this->record->table_to, $this->record->type, $this->record->restore);
+        $values = RestoreHelper::getDataValues($this->chunk, $this->to_columns, $fromConnection, $this->record->table_to, $this->record->type, $this->restore);
 
         $model->insert($values);
     }

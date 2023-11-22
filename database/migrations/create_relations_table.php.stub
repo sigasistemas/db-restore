@@ -25,8 +25,9 @@ return new class extends Migration
             }
             $table->string('name', 255)->nullable()->comment('Nome da relação, serve como apelido ex: Tenant, User, etc...');
             $table->string('slug', 255)->nullable()->comment('Slug da relação, serve como apelido ex: tenant, user, etc...');
-            $table->string('table_name', 255)->nullable()->comment('Nome da tabela da relação');
-            $table->string('column_from', 255)->nullable()->comment('Nome da coluna da relação');
+            $table->string('table_from', 255)->nullable()->comment('Nome da tabela da relação de onde será recuperado os dados');
+            $table->string('column_from', 255)->nullable()->comment('Nome da coluna da relação que será filtrada');
+            $table->string('column_value', 255)->nullable()->comment('Nome da coluna do valor da relação, que será recuperado');
             $table->enum('status', ['draft', 'published'])->default('published')->comment('Status da relação');
             $table->text('description')->nullable()->comment('Descrição da relação');
             $table->timestamps();
