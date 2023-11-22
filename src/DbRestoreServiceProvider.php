@@ -164,6 +164,7 @@ class DbRestoreServiceProvider extends PackageServiceProvider
             'create_imports_table',
             'create_exports_table',
             'create_orderings_table',
+            'create_defaults_table',
         ];
     }
 }
