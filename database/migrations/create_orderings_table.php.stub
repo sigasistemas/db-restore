@@ -35,7 +35,7 @@ return new class extends Migration
             $table->enum('direction', ['ASC', 'DESC'])->default('ASC')->nullable()->comment('Direção da ordenação');
             $table->integer('ordering')->default(0)->nullable()->comment('Ordem da ordenação');
             $table->text('description')->nullable();
-            $table->enum('status', ['draft', 'published'])->nullable()->default('draft')->comment('Situação do registro'); 
+            $table->enum('status', ['draft', 'published'])->nullable()->default('draft')->comment('Situação do registro');
             if (config('db-restore.incrementing', false)) {
                 $table->morphs('orderingable');
             } else {
