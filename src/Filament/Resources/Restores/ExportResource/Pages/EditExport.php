@@ -8,7 +8,7 @@
 
 namespace Callcocam\DbRestore\Filament\Resources\Restores\ExportResource\Pages;
 
-use  Callcocam\DbRestore\Filament\Resources\Restores\ExportResource; 
+use  Callcocam\DbRestore\Filament\Resources\Restores\ExportResource;
 use Callcocam\DbRestore\Forms\Components\ConnectionToField;
 use Callcocam\DbRestore\Forms\Components\SelectColumnField;
 use Callcocam\DbRestore\Forms\Components\SelectTableToField;
@@ -24,7 +24,7 @@ use Callcocam\DbRestore\Traits\WithFormSchemas;
 use Callcocam\DbRestore\Traits\WithSections;
 use Callcocam\DbRestore\Traits\WithTables;
 use Filament\Actions;
-use Filament\Forms\Form; 
+use Filament\Forms\Form;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -59,7 +59,7 @@ class EditExport extends EditRecord
                     $sheet->setTitle($record->name);
                     foreach ($columns as   $column) {
                         $sheet->setCellValue(sprintf('%s1', $column->column_from), Str::title($column->column_to));
-                    } 
+                    }
                     $rows = RestoreHelper::getFromDatabaseRows($record, $record->table_from);
 
                     $to_columns = RestoreHelper::getColumsSchema($columns, $record->table_from, 'column_to');
@@ -102,6 +102,7 @@ class EditExport extends EditRecord
 
     public function form(Form $form): Form
     {
+        $record = $this->record;
         return $form
             ->schema([
                 TextInputField::make('name')
@@ -122,7 +123,7 @@ class EditExport extends EditRecord
                 TextInputField::make('file')
                     ->readOnly()
                     ->columnSpanFull(),
-                SelectTableToField::makeTable('table_from', $this->record)
+                SelectTableToField::makeTable('table_from', $record)
                     ->columnSpan([
                         'md' => 6
                     ])->required(),
@@ -153,11 +154,14 @@ class EditExport extends EditRecord
                     ->columnSpan([
                         'md' => 2
                     ]),
-                $this->getSectionColumnsSchema($this->record, function ($record) {                    
-                    return $this->getColumnsSchemaFileExportForm($record );
+                $this->getSectionColumnsSchema($record, function ($record) {
+                    return $this->getColumnsSchemaFileExportForm($record);
                 }),
-                $this->getSectionFiltersSchema($this->record),
-                $this->getSectionOrderingsSchema($this->record),
+                $this->getSectionFiltersSchema(
+                    record: $record, //pode ser tanto um model connection, restore, children, import, export ou shared 
+                    tableTo: $record->table_from, //pode ser tanto um tabela de destino ou de origem, passado quando a tabela para o campo name for diferente da tabela de origem
+                ),
+                $this->getSectionOrderingsSchema($record),
                 static::getStatusFormRadioField(),
                 TextareaField::makeText('description')
             ])->columns(12);

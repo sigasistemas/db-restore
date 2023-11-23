@@ -10,6 +10,7 @@
 namespace Callcocam\DbRestore\Forms\Components;
 
 use Callcocam\DbRestore\Models\AbstractModelRestore;
+use Callcocam\DbRestore\Models\Connection;
 use Callcocam\DbRestore\Traits\HasTraduction;
 
 class SelectTableFromField extends SelectTableField
@@ -18,12 +19,18 @@ class SelectTableFromField extends SelectTableField
 
     public static function makeTable(string $name, AbstractModelRestore $record = null, $label = null): static
     {
+        if ($record instanceof Connection) {
+            $connectionFrom = $record;
+        } else {
+            $connectionFrom = $record->connectionFrom;
+        }
+
         $static = app(static::class, ['name' => $name]);
         $static->configure()
             ->label($static->getTraductionFormLabel($label ?? $name))
             ->placeholder($static->getTraductionFormPlaceholder($label ?? $name))
             ->live()->required()
-            ->options($static->getTablesOptions($record->connectionFrom));
+            ->options($static->getTablesOptions($connectionFrom));
 
         return $static;
     }

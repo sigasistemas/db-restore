@@ -9,7 +9,6 @@
 namespace Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource\Pages;
 
 use Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource;
-use Callcocam\DbRestore\Forms\Components\ConnectionField;
 use Callcocam\DbRestore\Forms\Components\ConnectionFromField;
 use Callcocam\DbRestore\Forms\Components\ConnectionToField;
 use Callcocam\DbRestore\Forms\Components\SelectColumnField;
@@ -48,6 +47,8 @@ class EditRestore extends EditRecord
 
     public function form(Form $form): Form
     {
+        $record = $this->record;
+
         return $form
             ->schema([
                 ConnectionFromField::make('connection_from_id')
@@ -66,12 +67,12 @@ class EditRestore extends EditRecord
                         'md' => '4'
                     ])
                     ->maxLength(255),
-                SelectTableFromField::makeTable('table_from', $this->record)
+                SelectTableFromField::makeTable('table_from', $record)
                     ->required()
                     ->columnSpan([
                         'md' => '3'
                     ]),
-                SelectTableToField::makeTable('table_to', $this->record)
+                SelectTableToField::makeTable('table_to', $record)
                     ->required()
                     ->columnSpan([
                         'md' => '3'
@@ -94,11 +95,16 @@ class EditRestore extends EditRecord
                     ->columnSpan([
                         'md' => '3'
                     ]),
-                $this->getSectionColumnsSchema($this->record, function ($record) {
+                $this->getSectionColumnsSchema($record, function ($record) {
                     return $this->getColumnsSchemaForm($record);
                 })->visible(fn (Restore $record) => $record->table_to && $record->table_from),
-                $this->getSectionFiltersSchema($this->record)->visible(fn (Restore $record) => $record->table_to),
-                $this->getSectionOrderingsSchema($this->record)->visible(fn (Restore $record) => $record->table_from),
+                $this->getSectionFiltersSchema(
+                    record: $record,//pode ser tanto um model connection, restore, children, import, export ou shared
+                    connection: $record->connectionFrom,// passar porque vamos a coxao de origem
+                    tableTo: $record->table_from,// passar porque vamos a tabela de origem
+                    connectionTo: $record->connectionTo //passar porque a conexao padrão é a de origem, para o campo name teremos que passar a conexao de destino
+                )->visible(fn (Restore $record) => $record->table_to),
+                $this->getSectionOrderingsSchema($record)->visible(fn (Restore $record) => $record->table_from),
                 static::getStatusFormRadioField(),
                 Forms\Components\Textarea::make('description')
                     ->label($this->getTraductionFormLabel('description'))

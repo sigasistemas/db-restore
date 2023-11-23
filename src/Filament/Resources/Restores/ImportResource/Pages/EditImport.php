@@ -107,6 +107,8 @@ class EditImport extends EditRecord
 
     public function form(Form $form): Form
     {
+        //Import model
+        $record = $this->record; 
         return $form
             ->schema([
                 TextInputField::makeText('name')
@@ -124,7 +126,7 @@ class EditImport extends EditRecord
                     ->columnSpan([
                         'md' => 4
                     ]),
-                SelectTableToField::makeTable('table_to', $this->record)
+                SelectTableToField::makeTable('table_to', $record)
                     ->columnSpan([
                         'md' => 6
                     ]),
@@ -159,11 +161,13 @@ class EditImport extends EditRecord
                     ->afterStateUpdated(function (Set $set) {
                         // $set('columns', []);
                     }),
-                $this->getSectionColumnsSchema($this->record, function ($record) {
+                $this->getSectionColumnsSchema($record, function ($record) {
                     return $this->getColumnsSchemaFileForm($record);
                 })->visible(fn (Import $record) => $record->table_to && $record->file),
-                $this->getSectionFiltersSchema($this->record)->visible(fn (Import $record) => $record->table_to && $record->file),
-                $this->getSectionOrderingsSchema($this->record)->visible(fn (Import $record) => $record->table_to && $record->file),
+                  
+                $this->getSectionFiltersSchema( record: $record )->visible(fn (Import $record) => $record->table_to && $record->file),
+
+                $this->getSectionOrderingsSchema($record)->visible(fn (Import $record) => $record->table_to && $record->file),
 
                 Forms\Components\Section::make($this->getTraduction('childrens', 'restore', 'form',  'label'))
                     ->description($this->getTraduction('childrens', 'restore', 'form',  'description'))

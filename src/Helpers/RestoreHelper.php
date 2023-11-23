@@ -144,7 +144,7 @@ class RestoreHelper
                 $toConnection = RestoreHelper::getConnectionCloneOptions($restore->connectionTo);
                 $tableName = $tableTo ?? $restore->table_to;
                 $others = DB::connection($toConnection)
-                    ->table($tableName)->get()->pluck('old_id')->toArray();
+                    ->table($tableName)->get()->pluck('old_id', 'id')->toArray();
                 $others = array_filter($others);
                 if ($others) {
                     $query->whereNotIn('id', $others);
@@ -152,11 +152,20 @@ class RestoreHelper
                 break;
             case 'excluir':
                 $others = DB::connection($from_connection)
-                    ->table($from_table)->get()->pluck('id')->toArray();
+                    ->table($from_table)->get()->pluck('id', 'id')->toArray();
                 $others = array_filter($others);
-                if ($others) { 
+                if ($others) {
                     $toConnection = RestoreHelper::getConnectionCloneOptions($restore->connectionTo);
                     $tableName = $tableTo ?? $restore->table_to;
+                    if ($childrens = $restore->childrens) {
+                        foreach ($childrens as $children) {
+                            $parents = DB::connection($toConnection)
+                                ->table($tableName)->get()->pluck('id')->toArray();
+                            DB::connection($toConnection)->table($children->table_to)
+                                ->whereIn($children->join_from_column, $parents)
+                                ->delete();
+                        }
+                    }
                     DB::connection($toConnection)->table($tableName)->whereIn('old_id', $others)
                         ->delete();
                 }
@@ -229,15 +238,10 @@ class RestoreHelper
             //Valor da coluna da tabela de origem que vamos usar para recuperar o dado
             // $columnFromName = $relation->column_from;
             //Nome da coluna que vamos recuperar o dado
-            $columnValue = $relation->column_value; 
+            $columnValue = $relation->column_value;
             //Se o valor da coluna da tabela de origem for igual ao valor da coluna da tabela de destino
-            if (Cache::has(sprintf('_%s_%s', $column_from, $val))) {
-                $data = Cache::get(sprintf('_%s_%s', $column_from, $val));
-            } else {
-                $data = DB::connection($connectionName)
-                    ->table($tableName)->where($columnToName, $val)->value($columnValue);
-                Cache::forever(sprintf('_%s_%s', $column_from, $val), $data);
-            }
+            $data = DB::connection($connectionName)
+                ->table($tableName)->where($columnToName, $val)->value($columnValue);
             return  $data;
         } else {
             switch ($type) {
@@ -324,7 +328,7 @@ class RestoreHelper
                 $from_columns = static::getColumsSchema($columns, $from_table, 'column_from');
 
                 $filterList = $children->filters->filter(fn ($filter) => $filter->type == 'list')->all();
- 
+
                 $rows = static::getFromDatabaseRows($record, $from_table, $filterList, null, $children->table_to);
 
                 static::beforeRemoveFilters($children);
@@ -333,10 +337,47 @@ class RestoreHelper
 
                 $to_columns = static::getColumsSchema($columns, $to_table, 'column_to');
 
-                $chunks = array_chunk($rows, 1000); 
-                
+                $chunks = array_chunk($rows, 1000);
+
                 foreach ($chunks as $chunk) {
                     $batch->add(new \Callcocam\DbRestore\Jobs\DbRestoreChidrenJob($children, $chunk, $to_columns, $from_columns, $record));
+                }
+            });
+        }
+    }
+
+    public static function afterGetSharedValues($record)
+    {
+
+        $shareds = $record->shareds;
+
+        if ($shareds) {
+
+            return $shareds->map(function ($shared) use ($record) {
+
+                $batch = Bus::batch([])->then(function (Batch $batch) {
+                })->name($shared->name)->dispatch();
+
+                $columns = $shared->columns;
+
+                $from_table = $shared->table_from;
+
+                $from_columns = static::getColumsSchema($columns, $from_table, 'column_from');
+
+                $filterList = $shared->filters->filter(fn ($filter) => $filter->type == 'list')->all();
+
+                $rows = static::getFromDatabaseRows($record, $from_table, $filterList, null, $shared->table_to);
+
+                static::beforeRemoveFilters($shared);
+
+                $to_table = $shared->table_to;
+
+                $to_columns = static::getColumsSchema($columns, $to_table, 'column_to');
+
+                $chunks = array_chunk($rows, 1000);
+
+                foreach ($chunks as $chunk) {
+                    $batch->add(new \Callcocam\DbRestore\Jobs\DbRestoreSharedJob($shared, $chunk, $to_columns, $from_columns, $record));
                 }
             });
         }
@@ -355,7 +396,7 @@ class RestoreHelper
 
             foreach ($filterDeletes as $filterDelete) {
                 $query = DB::connection($connection)->table($record->table_to);
-                static::queryFilters($query, $filterDelete->column, $filterDelete->operator, $filterDelete->value);
+                static::queryFilters($query, $filterDelete->column_to, $filterDelete->operator, $filterDelete->value);
                 if ($childrens = $record->childrens) {
                     $data = $query->get()->pluck('id')->toArray();
                     foreach ($childrens as $children) {
@@ -418,38 +459,12 @@ class RestoreHelper
             $data['updated_at'] = static::validateDate(data_get($row, 'updated_at')) ? data_get($row, 'updated_at') : now()->format('Y-m-d H:i:s');
             $data['deleted_at'] = static::validateDate(data_get($row, 'deleted_at')) ? data_get($row, 'deleted_at') : null;
 
-            if ($type == 'polymorphic') {
-                if ($tableName) {
-                    $tableName = Str::singular($tableName);
-                    $data[sprintf('%sable_type', $tableName)] = $restore->restoreModel->name;
-                    if (in_array($key, config('tenant.default_tenant_columns'))) {
-                        $data[sprintf('%sable_id', $tableName)] = data_get($data, 'tenant_id');
-                    } else {
-                        $data[sprintf('%sable_id', $tableName)] = static::getTenantId($row);
-                    }
-                }
-            }
-            if (isset($data['status'])) {
-                $status = data_get($row, 'status');
-                if (!in_array($data['status'], ['published', 'draft'])) {
-                    $data['status'] = (int)$status ? 'published' : 'draft';
-                } else {
-                    $data['status'] = $status;
-                }
-            }
+            $data = static::getDataPolymorphicValues($row, $type, $tableName, $restore, $data);
+
+            $data = static::getDataStatusValues($row, $data);
+
             if ($children) {
-                $childrenDatas = [];
-                $columns = $children->columns;
-                foreach ($columns as $column) {
-                    $childrenData['id'] = strtolower((string) Str::ulid());
-                    $childrenData['field_id'] =   $column->id;
-                    $childrenData['description'] = data_get($row, $column->column_from);
-                    $childrenData['created_at'] = now();
-                    $childrenData['updated_at'] = now();
-                    $childrenData[$children->join_from_column] = data_get($data, $children->join_to_column);
-                    $childrenDatas[] = $childrenData;
-                }
-                $data['childrens'] = $childrenDatas;
+                $data = static::getDataChildremValues($row, $children, $data);
             }
             $values[] = $data;
         }
@@ -535,6 +550,48 @@ class RestoreHelper
                     break;
             }
         }
+
+        return $data;
+    }
+
+
+
+    public static function getDataPolymorphicValues($row, $type, $tableName, $restoreModel, $data)
+    {
+        if ($type == 'polymorphic' && $restoreModel) {
+            if ($tableName) {
+                $tableName = Str::singular($tableName);
+                $data[sprintf('%sable_type', $tableName)] = $restoreModel->name;
+                $data[sprintf('%sable_id', $tableName)] = static::getTenantId($row);
+            }
+        }
+        return $data;
+    }
+
+    public static function getDataStatusValues($row, $data)
+    {
+        if (isset($data['status'])) {
+            $status = data_get($row, 'status');
+            if (!in_array($data['status'], ['published', 'draft'])) {
+                $data['status'] = (int)$status ? 'published' : 'draft';
+            }
+        }
+        return $data;
+    }
+    public static function getDataChildremValues($row, $children, $data)
+    {
+        $childrenDatas = [];
+        $columns = $children->columns;
+        foreach ($columns as $column) {
+            $childrenData['id'] = strtolower((string) Str::ulid());
+            $childrenData['field_id'] =   $column->id;
+            $childrenData['description'] = data_get($row, $column->column_from);
+            $childrenData['created_at'] = now();
+            $childrenData['updated_at'] = now();
+            $childrenData[$children->join_from_column] = data_get($data, $children->join_to_column);
+            $childrenDatas[] = $childrenData;
+        }
+        $data['childrens'] = $childrenDatas;
 
         return $data;
     }

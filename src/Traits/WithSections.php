@@ -59,27 +59,33 @@ trait WithSections
     }
 
     /**
-     * @param AbstractModelRestore $record
+     * @param AbstractModelRestore $record pode ser um model connection, restore, children, import, export ou shared
+     * $connection pode ser tanto um conexao de destino ou de origem, passado quando a conexao para o campo name for diferente da conexao de origem
+     * $tableTo passar quando a tabela for diferente da tabela de origem
+     * $connectionTo tem que ser um conexao de destino
      * @return Forms\Components\Section
      */
-    public function getSectionFiltersSchema(AbstractModelRestore $record, $connectionTo = null, $tableTo = null)
-    {
+    public function getSectionFiltersSchema(AbstractModelRestore $record, $connection = null, $tableTo = null, $connectionTo = null)
+    { 
         return Forms\Components\Section::make($this->getTraduction('filters', 'restore', 'form',  'label'))
             ->description($this->getTraduction('filters', 'restore', 'form',  'description'))
             ->collapsed()
-            ->schema(function () use ($record, $connectionTo, $tableTo) {
+            ->schema(function () use ($record, $connection, $tableTo, $connectionTo) {
                 return  [
                     Forms\Components\Repeater::make('filters')
                         ->relationship('filters')
                         ->hiddenLabel()
-                        ->schema(function () use ($record, $connectionTo, $tableTo) {
+                        ->schema(function () use ($record, $connection, $tableTo, $connectionTo) {
+                            if (!$connection) {
+                                $connection = $record->connectionTo;
+                            }
                             if (!$connectionTo) {
                                 $connectionTo = $record->connectionTo;
                             }
                             if (!$tableTo) {
                                 $tableTo = $record->table_to;
                             }
-                            return $this->getFiltersSchemaForm($connectionTo,  $tableTo);
+                            return $this->getFiltersSchemaForm($connection,  $tableTo, $connectionTo);
                         })
                         ->columns(12)
                         ->columnSpanFull()

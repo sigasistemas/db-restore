@@ -46,6 +46,9 @@ return [
             'table_name' => [
                 'label' => 'Tabela',
             ],
+            'shared_id' => [
+                'label' => 'Compartilhamento',
+            ],
         ],
         'form' => [
             'name' => [
@@ -282,6 +285,14 @@ return [
             'ordering' => [
                 'label' => 'Prioridade',
                 'placeholder' => 'Selecione a prioridade',
+            ],
+            'relation_column_from'=>[
+                'label' => 'Valor do filtro',
+                'placeholder' => 'Selecione',
+            ],
+            'shared_id'=>[
+                'label' => 'Compartilhamento',
+                'placeholder' => 'Selecione',
             ],
 
         ],

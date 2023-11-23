@@ -16,7 +16,7 @@ class Restore extends AbstractModelRestore
 
     protected $table = 'restores';
 
-    protected $with = ['connectionFrom', 'connectionTo', 'columns', 'filters', 'orderings'];
+    protected $with = ['connectionFrom', 'connectionTo', 'columns', 'filters', 'orderings', 'childrens', 'shareds'];
 
     public function connections()
     {
@@ -56,5 +56,10 @@ class Restore extends AbstractModelRestore
     public function childrens()
     {
         return $this->morphMany(Children::class, 'childrenable');
+    }
+
+    public function shareds()
+    {
+        return $this->hasMany(SharedItem::class);
     }
 }

@@ -1,12 +1,14 @@
 <?php
+
 /**
-* Created by Claudio Campos.
-* User: callcocam@gmail.com, contato@sigasmart.com.br
-* https://www.sigasmart.com.br
-*/
+ * Created by Claudio Campos.
+ * User: callcocam@gmail.com, contato@sigasmart.com.br
+ * https://www.sigasmart.com.br
+ */
+
 namespace Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource\Pages;
 
-use Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource; 
+use Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource;
 use Callcocam\DbRestore\Helpers\RestoreHelper;
 use Callcocam\DbRestore\Models\Restore;
 use Filament\Actions;
@@ -14,7 +16,8 @@ use Filament\Infolists\Components;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Bus\Batch;
-use Illuminate\Support\Facades\Bus; 
+use Illuminate\Support\Facades\Bus;
+use Throwable;
 
 class ViewRestore extends ViewRecord
 {
@@ -30,7 +33,7 @@ class ViewRestore extends ViewRecord
                 ->action(function (Restore $record) {
 
                     $columns = $record->columns;
- 
+
                     $from_table = $record->table_from;
 
                     $from_columns = RestoreHelper::getColumsSchema($columns, $from_table, 'column_from');
@@ -41,13 +44,18 @@ class ViewRestore extends ViewRecord
 
                     $filterList = $record->filters->filter(fn ($filter) => $filter->type == 'list')->all();
 
-                    $rows = RestoreHelper::getFromDatabaseRows($record, $from_table, $filterList); 
-                    
-                    RestoreHelper::beforeRemoveFilters($record); 
+                    $rows = RestoreHelper::getFromDatabaseRows($record, $from_table, $filterList);
+
+                    RestoreHelper::beforeRemoveFilters($record);
 
                     $chunks = array_chunk($rows, 1000);
 
                     $batch =  Bus::batch([])->then(function (Batch $batch) use ($record) {
+                        // All jobs completed successfully...
+                    })->catch(function (Batch $batch, Throwable $e) {
+                        // First batch job failure detected...
+                    })->finally(function (Batch $batch) use ($record) {
+                        // The batch has finished executing... 
                     })->name($record->name)->dispatch();
 
                     foreach ($chunks as $chunk) {
@@ -55,7 +63,8 @@ class ViewRestore extends ViewRecord
                     }
 
                     RestoreHelper::afterGetChildresValues($record);
- 
+
+                    RestoreHelper::afterGetSharedValues($record);
                 }),
         ];
     }

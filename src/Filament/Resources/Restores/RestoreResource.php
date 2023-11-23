@@ -9,6 +9,7 @@ namespace Callcocam\DbRestore\Filament\Resources\Restores;
 
 use Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource\Pages; 
 use Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource\RelationManagers\ChildrensRelationManager;
+use Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource\RelationManagers\SharedsRelationManager;
 use Callcocam\DbRestore\Models\Restore;
 use Callcocam\DbRestore\Traits\HasDatesFormForTableColums;
 use Callcocam\DbRestore\Traits\HasStatusColumn; 
@@ -65,6 +66,7 @@ class RestoreResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
+                Tables\Actions\ReplicateAction::make(),
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
@@ -80,7 +82,8 @@ class RestoreResource extends Resource
     public static function getRelations(): array
     {
         return [
-            ChildrensRelationManager::class
+            ChildrensRelationManager::class,
+            SharedsRelationManager::class,
         ];
     }
 

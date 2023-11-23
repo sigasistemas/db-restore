@@ -241,24 +241,18 @@ trait WithFormSchemas
         return  $columns;
     }
 
-    protected function getFiltersSchemaForm($connection, $table)
+    protected function getFiltersSchemaForm($connection, $table, $connectionTo)
     {
 
+
         return [
-            TextInputField::make('name')
+            SelectTableToField::makeTable('name', $connectionTo)
                 ->required()
                 ->columnSpan([
                     'md' => '3',
                 ]),
-            SelectColumnField::make('column_to')
+            SelectColumnToField::makeColumnConnection('column_to', $connection, $table)
                 ->required()
-                ->options(function () use ($connection, $table) {
-                    if ($connection) {
-                        return $this->getColumns($connection, $table, 'to');
-                    }
-
-                    return [];
-                })
                 ->columnSpan([
                     'md' => '2',
                 ]),

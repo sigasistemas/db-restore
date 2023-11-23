@@ -8,21 +8,32 @@
  */
 
 namespace Callcocam\DbRestore\Forms\Components;
- 
-use Callcocam\DbRestore\Models\AbstractModelRestore; 
-use Callcocam\DbRestore\Traits\HasTraduction; 
+
+use Callcocam\DbRestore\Models\AbstractModelRestore;
+use Callcocam\DbRestore\Traits\HasTraduction;
 
 class SelectColumnToField extends SelectColumnField
 {
     use HasTraduction;
 
     public static function makeColumn(string $name, AbstractModelRestore | null $record = null, $label = null): static
-    {  
+    {
         $static = app(static::class, ['name' => $name]);
         $static->configure()
             ->label($static->getTraductionFormLabel($label ?? $name))
             ->placeholder($static->getTraductionFormPlaceholder($label ?? $name))
             ->options($static->getColumnsOptions($record->connectionTo,  $record->table_to, 'to'));
+
+        return $static;
+    }
+
+    public static function makeColumnConnection(string $name, AbstractModelRestore | null $connectionTo = null,  $table_to = null, $label = null): static
+    {
+        $static = app(static::class, ['name' => $name]);
+        $static->configure()
+            ->label($static->getTraductionFormLabel($label ?? $name))
+            ->placeholder($static->getTraductionFormPlaceholder($label ?? $name))
+            ->options($static->getColumnsOptions($connectionTo,  $table_to, 'to'));
 
         return $static;
     }
