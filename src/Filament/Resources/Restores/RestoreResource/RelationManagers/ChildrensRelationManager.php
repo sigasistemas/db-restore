@@ -84,7 +84,6 @@ class ChildrensRelationManager extends RelationManager
                     'one-to-one' => $this->getTraduction('one-to-one', 'restore', 'form', 'label'),
                     'one-to-many' => $this->getTraduction('one-to-many', 'restore', 'form', 'label'),
                     'one-to-many-inverse' => $this->getTraduction('one-to-many-inverse', 'restore', 'form', 'label'),
-                    'polymorphic' => $this->getTraduction('polymorphic', 'restore', 'form', 'label'),
                 ])
                 ->columnSpan([
                     'md' => '4'
@@ -115,29 +114,19 @@ class ChildrensRelationManager extends RelationManager
             Forms\Components\Section::make()
                 ->visible(fn (Children | null $record = null) => $record)
                 ->schema(function (Children | null $record = null) use ($ownerRecord) {
-                    return [
-                        Forms\Components\Section::make($this->getTraduction('columns', 'restore', 'form',  'label'))
-                            ->description($this->getTraduction('columns', 'restore', 'form', 'description'))
-                            ->visible($ownerRecord->table_from && $ownerRecord->table_to)
-                            ->collapsed()
-                            ->schema(function (Children | null $record = null) use ($ownerRecord) {
-                                if (!$record) {
-                                    return [];
-                                }
-                                return  [
-                                    Forms\Components\Repeater::make('columns')
-                                        ->relationship('columns')
-                                        ->hiddenLabel()
-                                        ->schema(function () use ($ownerRecord) {
-                                            $cloneRecord = clone $ownerRecord;
-                                            $cloneRecord->connectionTo = $ownerRecord->connectionTo;
-                                            $cloneRecord->connectionFrom = $ownerRecord->connectionFrom;
-                                            return $this->getColumnsSchemaForm($cloneRecord);
-                                        })
-                                        ->columns(12)
-                                        ->columnSpanFull()
-                                ];
-                            }),
+                    if (!$record) {
+                        return [];
+                    }
+                    $cloneRecord = clone $record;
+                    //O model children não tem o campo connectionTo e connectionFrom, clonamos o model Children para poder adicionar esses campos o connectionTo e connectionFrom
+                    //O clone não copia o relacionamento, temos que setar manualmente
+                    $cloneRecord->connectionTo = $ownerRecord->connectionTo;
+                    $cloneRecord->connectionFrom = $ownerRecord->connectionFrom;
+                    //Nesse caso precisamos das tabelas de origem e destino do children ex: users e o pai eos posts e o filho
+                    return [ 
+                        $this->getSectionColumnsSchema($cloneRecord, function ($cloneRecord) {
+                            return $this->getColumnsSchemaForm($cloneRecord);
+                        })->visible($ownerRecord->table_from),
                         $this->getSectionFiltersSchema($ownerRecord, $ownerRecord->connectionFrom, $record->table_from)->visible($ownerRecord->table_from),
                         $this->getSectionOrderingsSchema($ownerRecord)->visible($ownerRecord->table_from),
                     ];

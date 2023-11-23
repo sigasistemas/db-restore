@@ -244,66 +244,8 @@ class RestoreHelper
                 ->table($tableName)->where($columnToName, $val)->value($columnValue);
             return  $data;
         } else {
-            switch ($type) {
-                case 'date':
-                    return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
 
-                    break;
-                case 'datetime':
-                    return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
-
-                    break;
-                case 'time':
-                    return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
-
-                    break;
-                case 'timestamp':
-                    return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
-
-                    break;
-                case 'year':
-                    return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
-
-                    break;
-                case 'binary':
-                    return  data_get($chunk, $column_from, $default_value);
-
-                    break;
-                case 'boolean':
-                    return  data_get($chunk, $column_from, $default_value);
-
-                    break;
-                case 'char':
-                    return  data_get($chunk, $column_from, $default_value);
-
-                    break;
-                case 'text':
-                    return  data_get($chunk, $column_from, $default_value);
-
-                    break;
-                case 'json':
-                    if ($data = data_get($chunk, $column_from, $default_value)) {
-                        $data = explode(',', data_get($chunk, $column_from, $default_value));
-                        return  json_encode($data);
-                    } else {
-                        return  null;
-                    }
-
-                    break;
-                case 'integer':
-                    if (in_array($column_from, ['status'])) {
-                        $status = data_get($chunk, $column_from, $default_value);
-                        return  $status  ? 'published' : 'draft';
-                    } else {
-                        return  (int) data_get($chunk, $column_from, $default_value);
-                    }
-
-                    break;
-                default:
-                    return  data_get($chunk, $column_from, $default_value);
-
-                    break;
-            }
+            return static::getValueType($type, $chunk, $column_from, $default_value);
         }
 
         return null;
@@ -349,33 +291,55 @@ class RestoreHelper
     public static function afterGetSharedValues($record)
     {
 
-        $shareds = $record->shareds;
+        $sharedItems = $record->shareds;
 
-        if ($shareds) {
+        if ($sharedItems) {
 
-            return $shareds->map(function ($shared) use ($record) {
-
+            return $sharedItems->map(function ($sharedItem) use ($record) {
+                //Todo shared item tem um shared
+                //O sahred tem um restore
+                $shared = $sharedItem->shared;
+                //Todo shared pode ter um filtro
+                $filters = $shared->filters; 
                 $batch = Bus::batch([])->then(function (Batch $batch) {
                 })->name($shared->name)->dispatch();
-
+                //Todo shared tem colunas
                 $columns = $shared->columns;
-
+                //Todo shared tem uma tabela de origem
                 $from_table = $shared->table_from;
-
+                //Vamos pegar as colunas da tabela de origem
                 $from_columns = static::getColumsSchema($columns, $from_table, 'column_from');
-
-                $filterList = $shared->filters->filter(fn ($filter) => $filter->type == 'list')->all();
-
+                //Vamos pegar os filtros do shared que são do tipo list e que tem o nome da tabela de destino
+                //Ex: Se o shared for de endereços, vamos pegar os filtros que são do tipo list e que tem o nome da tabela de destino(ou tabela pai) que pode ser usuarios, empresas, etc...
+                $filterList = $filters->filter(fn ($filter) => $filter->type == 'list' && $filter->name == data_get($record, 'table_to'))->all();
+                //Vamos pegar os dados da tabela de origem
                 $rows = static::getFromDatabaseRows($record, $from_table, $filterList, null, $shared->table_to);
-
-                static::beforeRemoveFilters($shared);
-
+                //Vamos pegar a conexao da tabela de destino
+                $connectionName = RestoreHelper::getConnectionCloneOptions($record->connectionTo);
+                //Como o shared é um relacionamento polimorfico, vamos adicionar a coluna de tipo e id
+                array_map(function ($row) use ($sharedItem, $shared, $connectionName, $record) {
+                    //Vamos pegar a tabela de destino
+                    $query = DB::connection($connectionName)->table($record->table_to)->where($shared->column_to, data_get($row, $shared->column_from));
+                    //Vamos pegar o id da tabela de destino
+                    $parentId = $query->value('id');  
+                    //Vamos adicionar a coluna de tipo e id ex: addressable_id, addressable_type
+                    $morph_column_type =   $sharedItem->morph_column_type;                    
+                    $morph_column_id = $sharedItem->morph_column_id;
+                    //Vamos adicionar os valores da coluna de tipo e id
+                    $row->{$morph_column_type} = $sharedItem->restore_momdel_name;
+                    $row->{$morph_column_id} = $parentId; 
+                    return $row;
+                }, $rows); 
+ 
+                //Vamos remover os dados baseados nos filtros do shared do tipo delete ou excluir
+                static::beforeRemoveFilters($shared);   
+                //Vamos pegar o nome da tabela de destino
                 $to_table = $shared->table_to;
-
-                $to_columns = static::getColumsSchema($columns, $to_table, 'column_to');
-
+                //Vamos pegar as colunas da tabela de destino
+                $to_columns = static::getColumsSchema($columns, $to_table, 'column_to'); 
+                //Vamos dividir os dados em pedaços de 1000
                 $chunks = array_chunk($rows, 1000);
-
+                //Vamos adicionar os jobs na fila
                 foreach ($chunks as $chunk) {
                     $batch->add(new \Callcocam\DbRestore\Jobs\DbRestoreSharedJob($shared, $chunk, $to_columns, $from_columns, $record));
                 }
@@ -459,7 +423,7 @@ class RestoreHelper
             $data['updated_at'] = static::validateDate(data_get($row, 'updated_at')) ? data_get($row, 'updated_at') : now()->format('Y-m-d H:i:s');
             $data['deleted_at'] = static::validateDate(data_get($row, 'deleted_at')) ? data_get($row, 'deleted_at') : null;
 
-            $data = static::getDataPolymorphicValues($row, $type, $tableName, $restore, $data);
+            // $data = static::getDataPolymorphicValues($row, $type, $tableName, $restore, $data);
 
             $data = static::getDataStatusValues($row, $data);
 
@@ -555,30 +519,20 @@ class RestoreHelper
     }
 
 
-
-    public static function getDataPolymorphicValues($row, $type, $tableName, $restoreModel, $data)
+    public static function getDataExportValues($rows, $to_columns, $connectionTo)
     {
-        if ($type == 'polymorphic' && $restoreModel) {
-            if ($tableName) {
-                $tableName = Str::singular($tableName);
-                $data[sprintf('%sable_type', $tableName)] = $restoreModel->name;
-                $data[sprintf('%sable_id', $tableName)] = static::getTenantId($row);
+        $values = [];
+        foreach ($rows as $row) {
+            $data = [];
+            foreach ($to_columns as $key => $column) {
+                $data[$key] = static::getExportValues($connectionTo, $row, $column);
             }
+            $values[] = $data;
         }
-        return $data;
+        return $values;
     }
 
-    public static function getDataStatusValues($row, $data)
-    {
-        if (isset($data['status'])) {
-            $status = data_get($row, 'status');
-            if (!in_array($data['status'], ['published', 'draft'])) {
-                $data['status'] = (int)$status ? 'published' : 'draft';
-            }
-        }
-        return $data;
-    }
-    public static function getDataChildremValues($row, $children, $data)
+    protected static function getDataChildremValues($row, $children, $data)
     {
         $childrenDatas = [];
         $columns = $children->columns;
@@ -596,22 +550,98 @@ class RestoreHelper
         return $data;
     }
 
-    public static function getDataExportValues($rows, $to_columns, $connectionTo)
+    protected static function getDataPolymorphicValues($row, $type, $tableName, $restoreModel, $data)
     {
-        $values = [];
-        foreach ($rows as $row) {
-            $data = [];
-            foreach ($to_columns as $key => $column) {
-                $data[$key] = static::getExportValues($connectionTo, $row, $column);
+        if ($type == 'polymorphic' && $restoreModel) {
+            if ($tableName) {
+                $tableName = Str::singular($tableName);
+                $data[sprintf('%sable_type', $tableName)] = $restoreModel->name;
+                $data[sprintf('%sable_id', $tableName)] = static::getTenantId($row);
             }
-            $values[] = $data;
         }
-        return $values;
+        return $data;
     }
 
-    public static function getTenantId($row)
+    protected static function getDataStatusValues($row, $data)
+    {
+        if (isset($data['status'])) {
+            $status = data_get($row, 'status');
+            if (!in_array($data['status'], ['published', 'draft'])) {
+                $data['status'] = (int)$status ? 'published' : 'draft';
+            }
+        }
+        return $data;
+    }
+
+    protected static function getTenantId($row)
     {
         return DB::connection(config('database.default'))->table('tenants')
             ->where(config('db-restore.oldId', 'old_id'), data_get($row, 'company_id'))->value('id');
+    }
+
+
+
+    protected static function getValueType($type, $chunk, $column_from, $default_value)
+    {
+        switch ($type) {
+            case 'date':
+                return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+
+                break;
+            case 'datetime':
+                return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+
+                break;
+            case 'time':
+                return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+
+                break;
+            case 'timestamp':
+                return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+
+                break;
+            case 'year':
+                return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+
+                break;
+            case 'binary':
+                return  data_get($chunk, $column_from, $default_value);
+
+                break;
+            case 'boolean':
+                return  data_get($chunk, $column_from, $default_value);
+
+                break;
+            case 'char':
+                return  data_get($chunk, $column_from, $default_value);
+
+                break;
+            case 'text':
+                return  data_get($chunk, $column_from, $default_value);
+
+                break;
+            case 'json':
+                if ($data = data_get($chunk, $column_from, $default_value)) {
+                    $data = explode(',', data_get($chunk, $column_from, $default_value));
+                    return  json_encode($data);
+                } else {
+                    return  null;
+                }
+
+                break;
+            case 'integer':
+                if (in_array($column_from, ['status'])) {
+                    $status = data_get($chunk, $column_from, $default_value);
+                    return  $status  ? 'published' : 'draft';
+                } else {
+                    return  (int) data_get($chunk, $column_from, $default_value);
+                }
+
+                break;
+            default:
+                return  data_get($chunk, $column_from, $default_value);
+
+                break;
+        }
     }
 }

@@ -46,7 +46,7 @@ class DbRestoreSharedJob implements ShouldQueue
             ->table($this->record->table_to);
 
         $values = RestoreHelper::getDataValues($this->chunk, $this->to_columns, $connectionTo, $this->record->table_to, $this->record->type, $this->restore);
-
+ 
         $model->insert($values);
     }
 }

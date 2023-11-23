@@ -294,6 +294,14 @@ return [
                 'label' => 'Compartilhamento',
                 'placeholder' => 'Selecione',
             ],
+            'morph_column_type'=>[
+                'label' => 'Coluna type',
+                'placeholder' => 'Selecione',
+            ],
+            'morph_column_id'=>[
+                'label' => 'Coluna id',
+                'placeholder' => 'Selecione',
+            ],
 
         ],
     ],

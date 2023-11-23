@@ -18,20 +18,24 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('restore_shared_items', function (Blueprint $table) {
+         Schema::create('restore_shared_items', function (Blueprint $table) {
             if (config('db-restore.incrementing', false)) {
                 $table->id();
                 $table->unsignedBigInteger('user_id')->nullable();
                 $table->unsignedBigInteger('tenant_id')->nullable();
                 $table->unsignedBigInteger('shared_id')->nullable();
                 $table->unsignedBigInteger('restore_id')->nullable();
+                $table->unsignedBigInteger('restore_model_id')->nullable();
             } else {
                 $table->ulid('id')->primary();
                 $table->ulid('user_id')->nullable();
                 $table->ulid('tenant_id')->nullable();
                 $table->ulid('shared_id')->nullable();
                 $table->ulid('restore_id')->nullable();
-            }   
+                $table->ulid('restore_model_id')->nullable();
+            }               
+            $table->string('morph_column_type', 255)->after('restore_model_id')->nullable()->comment('Nome da coluna type do compartilhamento de ligação entre as tabelas');
+            $table->string('morph_column_id', 255)->after('morph_column_type')->nullable()->comment('Nome da coluna id do compartilhamento de ligação entre as tabelas');
             $table->timestamps();
             $table->softDeletes();
         });

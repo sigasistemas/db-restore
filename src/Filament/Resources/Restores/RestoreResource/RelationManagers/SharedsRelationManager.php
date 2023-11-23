@@ -9,11 +9,13 @@
 namespace Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource\RelationManagers;
 
 use Callcocam\DbRestore\Forms\Components\SelectColumnField;
+use Callcocam\DbRestore\Forms\Components\SelectColumnFromField;
 use Callcocam\DbRestore\Forms\Components\SelectColumnToField;
 use Callcocam\DbRestore\Forms\Components\SelectTableFromField;
 use Callcocam\DbRestore\Forms\Components\SelectTableToField;
 use Callcocam\DbRestore\Forms\Components\TextInputField;
 use Callcocam\DbRestore\Models\Shared;
+use Callcocam\DbRestore\Models\SharedItem;
 use Callcocam\DbRestore\Traits\HasTraduction;
 use Callcocam\DbRestore\Traits\WithColumns;
 use Callcocam\DbRestore\Traits\WithFormSchemas;
@@ -107,7 +109,34 @@ class SharedsRelationManager extends RelationManager
                         ];
                     })
                     ->required(),
-            ]);
+                Group::make(function (SharedItem $SharedItem) use ($ownerRecord) {
+                    $shared = $SharedItem->shared;
+                    if (!$shared) {
+                        return [];
+                    }
+                    $cloneRecord = clone $shared;
+                    $cloneRecord->connectionTo = $ownerRecord->connectionTo;
+                    $cloneRecord->connectionFrom = $ownerRecord->connectionFrom;
+                    return [
+                        SelectColumnField::make('restore_model_id')
+                            ->relationship('restoreMomdel', 'name')
+                            ->columnSpan([
+                                'md' => 6
+                            ])
+                            ->required(),
+                        SelectColumnFromField::makeColumn('morph_column_type', $cloneRecord)
+                            ->columnSpan([
+                                'md' => 3
+                            ])
+                            ->required(),
+                        SelectColumnFromField::makeColumn('morph_column_id', $cloneRecord)
+                            ->columnSpan([
+                                'md' => 3
+                            ])
+                            ->required(),
+                    ];
+                })->columns(12)->columnSpanFull(),
+            ])->columns(12);
     }
 
     public function table(Table $table): Table
