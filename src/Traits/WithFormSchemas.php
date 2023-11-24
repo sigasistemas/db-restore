@@ -56,7 +56,7 @@ trait WithFormSchemas
                         'md' => '4',
                     ]),
 
-                SelectColumnField::makeToOptions('column_to', $record, 'table_from', 'relation_column_to')
+                SelectColumnField::makeToOptions('column_from', $record, 'table_from', 'relation_column_to')
                     ->required()
                     ->columnSpan([
                         'md' => '6',
