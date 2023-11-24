@@ -10,35 +10,28 @@ namespace Callcocam\DbRestore\Traits;
 
 use Callcocam\DbRestore\Models\Connection;
 use Callcocam\DbRestore\Helpers\RestoreHelper;
-use Callcocam\DbRestore\Models\Column;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 trait WithColumns
 {
-    public function columns()
+     
+
+
+    public function getColumnOptions($record,$connectionFrom = null, $connectionTo=null)
     {
-        $columns = $this->morphMany(Column::class, 'columnable');
-        if (!$columns->count()) {
-            if (!$this->connectionFrom)
-                $this->connectionFrom = $this->restore->connectionFrom;
-            if (!$this->connectionTo) {
-                $this->connectionTo = $this->restore->connectionTo;
-            }
-            return  $this->getColumnOptions($this);
+        if(!$connectionFrom){
+            $connectionFrom = $record->connectionFrom;
         }
-        return $columns;
-    }
-
-
-    public function getColumnOptions($record)
-    {
-        $columnsFrom = $this->getColumns($record->connectionFrom, $record->table_from);
-        $columnsTo = $this->getColumns($record->connectionTo, $record->table_to, 'to');
+        if(!$connectionTo){
+            $connectionTo = $record->connectionTo;
+        }
+        $columnsFrom = $this->getColumns($connectionFrom, $record->table_from);
+        $columnsTo = $this->getColumns($connectionTo, $record->table_to, 'to');
         foreach ($columnsFrom as $key => $column) {
             if (isset($columnsTo[$key])) {
-                $record->create([
+                $record->columns()->create([
                     'relation_id' => null,
                     'column_from' => $column,
                     'column_to' => $column,
@@ -47,8 +40,7 @@ trait WithColumns
                     "status" => "published",
                 ]);
             }
-        }
-        return $this->morphMany(Column::class, 'columnable');
+        } 
     }
 
     protected function getDataBases($schema)
