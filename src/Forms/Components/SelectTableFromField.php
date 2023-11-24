@@ -29,7 +29,7 @@ class SelectTableFromField extends SelectTableField
         $static->configure()
             ->label($static->getTraductionFormLabel($label ?? $name))
             ->placeholder($static->getTraductionFormPlaceholder($label ?? $name))
-            ->live()->required()
+            ->live()
             ->options($static->getTablesOptions($connectionFrom));
 
         return $static;

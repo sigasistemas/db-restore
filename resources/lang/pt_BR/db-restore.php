@@ -302,6 +302,16 @@ return [
                 'label' => 'Coluna id',
                 'placeholder' => 'Selecione',
             ],
+            'table_from_import'=>[
+                'label' => 'Tabela de destino',
+                'placeholder' => 'Selecione',
+            ],
+            'column_imports'=>[
+                'label' => 'Configuração de importação das colunas da tabela principal', 
+            ],
+            'childrens_imports'=>[
+                'description' => 'Configuração de importação das colunas da tabelas filha ou da coluna de itens', 
+            ],
 
         ],
     ],

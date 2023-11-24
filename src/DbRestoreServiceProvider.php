@@ -9,6 +9,7 @@
 namespace Callcocam\DbRestore;
 
 use Callcocam\DbRestore\Commands\DbRestoreCommand;
+use Callcocam\DbRestore\Commands\GModeloPlanilhaClienteCommand;
 use Callcocam\DbRestore\Testing\TestsDbRestore;
 use Filament\Support\Assets\AlpineComponent;
 use Filament\Support\Assets\Asset;
@@ -121,6 +122,7 @@ class DbRestoreServiceProvider extends PackageServiceProvider
     {
         return [
             DbRestoreCommand::class,
+            GModeloPlanilhaClienteCommand::class,
         ];
     }
 

@@ -75,7 +75,9 @@ trait WithFormSchemas
     protected function getColumnsSchemaFileForm($record, $relation = 'relation')
     {
         $columns = [];
-
+      if (empty($record->file)) {
+            return [];
+        }
         if (Storage::exists($record->file)) {
 
 
@@ -233,6 +235,7 @@ trait WithFormSchemas
                 'uuid' => 'Uuid',
                 'binary' => 'Binary',
                 'enum' => 'Enum',
+                'array' => 'Array',
             ])
             ->default('string')
             ->columnSpan([

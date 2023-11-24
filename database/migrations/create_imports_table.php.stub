@@ -34,6 +34,7 @@ return new class extends Migration
             } 
             $table->string('name')->nullable()->comment('Nome do registro'); 
             $table->string('slug')->nullable()->comment('Slug do registro');
+            $table->enum('type', ['duplicar', 'excluir', 'ignorar'])->default('ignorar')->comment('Tipo de ação');
             $table->string('table_to')->nullable()->comment('Tabela de destino');
             $table->string('file')->nullable()->comment('Arquivo de importação');
             $table->string('disk')->nullable()->comment('Disco de armazenamento');

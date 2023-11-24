@@ -227,6 +227,7 @@ class RestoreHelper
             }
         }
 
+
         if ($relation) {
             $val = data_get($chunk, $column_from);
             //Conexao da tabela de destino
@@ -276,7 +277,7 @@ class RestoreHelper
                 $rows = static::getFromDatabaseRows($record, $from_table, $filterList, null, $children->table_to);
                 //Vamos pegar a conexao da tabela de destino
                 $connectionName = RestoreHelper::getConnectionCloneOptions($record->connectionTo);
-                
+
                 array_map(function ($row) use ($children,  $record,  $connectionName) {
                     //Vamos pegar a tabela de destino  
                     $query = DB::connection($connectionName)->table($record->table_to);
@@ -289,7 +290,7 @@ class RestoreHelper
                     //Vamos adicionar os valores da coluna de tipo e id 
                     $row->{$parent} = $parentId;
                     return $row;
-                }, $rows); 
+                }, $rows);
                 //Vamos excluir os dados baseados nos filtros do filho do tipo delete ou excluir
                 static::beforeRemoveFilters($children);
                 //Vamos pegar o nome da tabela de destino
@@ -400,7 +401,7 @@ class RestoreHelper
         }
     }
 
-    public static function getDataValues($rows, $to_columns, $connectionTo, $children = null)
+    public static function getDataValues($rows, $to_columns, $connectionTo)
     {
         $values = [];
         foreach ($rows as $row) {
@@ -443,9 +444,11 @@ class RestoreHelper
 
             $data = static::getDataStatusValues($row, $data);
 
-            if ($children) {
-                $data = static::getDataChildremValues($row, $children, $data);
-            }
+            $data = static::getDataSlugValues($row, $data);
+
+            // if ($children) {
+            //     $data = static::getDataChildremValues($row, $children, $data);
+            // }
             $values[] = $data;
         }
         return $values;
@@ -589,6 +592,19 @@ class RestoreHelper
         return $data;
     }
 
+    protected static function getDataSlugValues($row, $data)
+    { 
+        if (isset($data['slug'])) {
+            $slug = data_get($data, 'slug');
+            if (!$slug) {
+                $data['slug'] = Str::of(data_get($data, 'name'))->__toString();
+            } else {
+                $data['slug'] = Str::of($slug)->slug()->__toString();
+            }
+        }
+        return $data;
+    }
+
     protected static function getTenantId($row)
     {
         return DB::connection(config('database.default'))->table('tenants')
@@ -652,6 +668,16 @@ class RestoreHelper
                 } else {
                     return  (int) data_get($chunk, $column_from, $default_value);
                 }
+                break;
+            case 'array':
+                if (is_array($column_from)) {
+                    $data = [];
+                    foreach ($column_from as $key => $value) {
+                        $data[$key] = data_get($chunk, $value, $default_value);
+                    }
+                    return  json_encode($data);
+                }
+                return  [];
 
                 break;
             default:

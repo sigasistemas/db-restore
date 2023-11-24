@@ -36,24 +36,16 @@ class DbRestoreFileJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $fromConnection = RestoreHelper::getConnectionCloneOptions($this->record->connectionTo);
+        $connectionTo = RestoreHelper::getConnectionCloneOptions($this->record->connectionTo);
 
-        $model = DB::connection($fromConnection)
+        $model = DB::connection($connectionTo)
             ->table($this->record->table_to);
 
-        $values = RestoreHelper::getDataValues(rows: $this->chunks, to_columns: $this->to_columns, connectionTo: $fromConnection, children: $this->children);
-
-        if ($this->children) {
-            foreach ($values as $value) {
-                $childrens = data_get($value, 'childrens');
-                unset($value['childrens']);
-                $model->insertGetId($value);
-                if ($childrens) {
-                    DB::connection($fromConnection)->table($this->children->table_from)->insert($childrens);
-                }
-            }
-        } else {
-            $model->insert($values);
-        }
+        $values = RestoreHelper::getDataValues(
+            rows: $this->chunks,
+            to_columns: $this->to_columns,
+            connectionTo: $connectionTo
+        ); 
+        $model->insert($values);
     }
 }
