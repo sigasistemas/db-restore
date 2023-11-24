@@ -49,6 +49,10 @@ class EditRestore extends EditRecord
     {
         $record = $this->record;
 
+        if (!$record->columns->count()) {
+            $this->getColumnOptions($record, $record->connectionFrom, $record->connectionTo);
+        }
+        
         return $form
             ->schema([
                 ConnectionFromField::make('connection_from_id')

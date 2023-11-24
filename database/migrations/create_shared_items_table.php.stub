@@ -34,8 +34,8 @@ return new class extends Migration
                 $table->ulid('restore_id')->nullable();
                 $table->ulid('restore_model_id')->nullable();
             }               
-            $table->string('morph_column_type', 255)->after('restore_model_id')->nullable()->comment('Nome da coluna type do compartilhamento de ligação entre as tabelas');
-            $table->string('morph_column_id', 255)->after('morph_column_type')->nullable()->comment('Nome da coluna id do compartilhamento de ligação entre as tabelas');
+            $table->string('morph_column_type', 255)->nullable()->comment('Nome da coluna type do compartilhamento de ligação entre as tabelas');
+            $table->string('morph_column_id', 255)->nullable()->comment('Nome da coluna id do compartilhamento de ligação entre as tabelas');
             $table->timestamps();
             $table->softDeletes();
         });

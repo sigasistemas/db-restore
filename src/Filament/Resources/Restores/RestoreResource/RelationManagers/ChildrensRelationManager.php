@@ -123,7 +123,11 @@ class ChildrensRelationManager extends RelationManager
                     $cloneRecord->connectionTo = $ownerRecord->connectionTo;
                     $cloneRecord->connectionFrom = $ownerRecord->connectionFrom;
                     //Nesse caso precisamos das tabelas de origem e destino do children ex: users e o pai eos posts e o filho
-                    return [ 
+
+                    if (!$record->columns->count()) {
+                        $this->getColumnOptions($cloneRecord, $ownerRecord->connectionFrom, $ownerRecord->connectionTo);
+                    }
+                    return [
                         $this->getSectionColumnsSchema($cloneRecord, function ($cloneRecord) {
                             return $this->getColumnsSchemaForm($cloneRecord);
                         })->visible($ownerRecord->table_from),

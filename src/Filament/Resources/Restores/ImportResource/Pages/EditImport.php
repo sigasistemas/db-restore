@@ -109,6 +109,11 @@ class EditImport extends EditRecord
     {
         //Import model
         $record = $this->record; 
+        
+        if (!$record->columns->count()) {
+            $this->getColumnOptions($record, $record->connectionFrom, $record->connectionTo);
+        }
+        
         return $form
             ->schema([
                 TextInputField::makeText('name')

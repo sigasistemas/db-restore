@@ -6,11 +6,12 @@
 */
 namespace Callcocam\DbRestore\Models;
 
+use Callcocam\DbRestore\Traits\WithColumns;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Children extends AbstractModelRestore
 {
-    use HasFactory;
+    use HasFactory ;
 
     protected $guarded = ['id'];
 
