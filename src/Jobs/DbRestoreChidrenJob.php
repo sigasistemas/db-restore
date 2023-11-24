@@ -44,8 +44,8 @@ class DbRestoreChidrenJob implements ShouldQueue
         $model = DB::connection($fromConnection)
             ->table($this->record->table_to);
 
-        $values = RestoreHelper::getDataValues($this->chunk, $this->to_columns, $fromConnection, $this->record->table_to, $this->record->type, $this->restore);
-
+        $values = RestoreHelper::getDataValues(rows: $this->chunk, to_columns: $this->to_columns, connectionTo: $fromConnection);
+ 
         $model->insert($values);
     }
 }

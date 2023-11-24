@@ -212,6 +212,7 @@ class RestoreHelper
     public static function getValues($connectionName, $chunk, $column)
     {
 
+
         $column_from = data_get($column, 'column_from');
         $default_value = data_get($column, 'default_value');
         $type = data_get($column, 'type');
@@ -254,33 +255,50 @@ class RestoreHelper
     public static function afterGetChildresValues($record)
     {
 
+        //Pega os filhos do restore ex: users tem os filhos categories, posts, etc...
         $childrens = $record->childrens;
-
+        //Se existir filhos
         if ($childrens) {
-
+            //Vamos percorrer os filhos
             return $childrens->map(function ($children) use ($record) {
-
+                //Vamos criar um batch para cada filho
                 $batch = Bus::batch([])->then(function (Batch $batch) {
                 })->name($children->name)->dispatch();
-
+                //Todo filho tem que ter colunas
                 $columns = $children->columns;
-
+                //Todo filho tem uma tabela de origem
                 $from_table = $children->table_from;
-
+                //Vamos pegar as colunas da tabela de origem
                 $from_columns = static::getColumsSchema($columns, $from_table, 'column_from');
-
+                //Vamos pegar os filtros do filho que são do tipo list
                 $filterList = $children->filters->filter(fn ($filter) => $filter->type == 'list')->all();
-
+                //Vamos pegar os dados da tabela de origem
                 $rows = static::getFromDatabaseRows($record, $from_table, $filterList, null, $children->table_to);
-
+                //Vamos pegar a conexao da tabela de destino
+                $connectionName = RestoreHelper::getConnectionCloneOptions($record->connectionTo);
+                
+                array_map(function ($row) use ($children,  $record,  $connectionName) {
+                    //Vamos pegar a tabela de destino  
+                    $query = DB::connection($connectionName)->table($record->table_to);
+                    //Vamos pegar o valor do id da tabela de destino
+                    $query->where($children->join_to_column, data_get($row, $children->join_from_column));
+                    //Vamos pegar o id da tabela de destino
+                    $parentId = $query->value('id');
+                    //Vamos adicionar a coluna de tipo e id ex: category_id da tabela de posts ou post_id da tabela de comments
+                    $parent =   $children->join_from_column;
+                    //Vamos adicionar os valores da coluna de tipo e id 
+                    $row->{$parent} = $parentId;
+                    return $row;
+                }, $rows); 
+                //Vamos excluir os dados baseados nos filtros do filho do tipo delete ou excluir
                 static::beforeRemoveFilters($children);
-
+                //Vamos pegar o nome da tabela de destino
                 $to_table = $children->table_to;
-
+                //Vamos pegar as colunas da tabela de destino
                 $to_columns = static::getColumsSchema($columns, $to_table, 'column_to');
-
+                //Vamos dividir os dados em pedaços de 1000
                 $chunks = array_chunk($rows, 1000);
-
+                //Vamos adicionar os jobs na fila
                 foreach ($chunks as $chunk) {
                     $batch->add(new \Callcocam\DbRestore\Jobs\DbRestoreChidrenJob($children, $chunk, $to_columns, $from_columns, $record));
                 }
@@ -300,7 +318,7 @@ class RestoreHelper
                 //O sahred tem um restore
                 $shared = $sharedItem->shared;
                 //Todo shared pode ter um filtro
-                $filters = $shared->filters; 
+                $filters = $shared->filters;
                 $batch = Bus::batch([])->then(function (Batch $batch) {
                 })->name($shared->name)->dispatch();
                 //Todo shared tem colunas
@@ -321,22 +339,22 @@ class RestoreHelper
                     //Vamos pegar a tabela de destino
                     $query = DB::connection($connectionName)->table($record->table_to)->where($shared->column_to, data_get($row, $shared->column_from));
                     //Vamos pegar o id da tabela de destino
-                    $parentId = $query->value('id');  
+                    $parentId = $query->value('id');
                     //Vamos adicionar a coluna de tipo e id ex: addressable_id, addressable_type
-                    $morph_column_type =   $sharedItem->morph_column_type;                    
+                    $morph_column_type =   $sharedItem->morph_column_type;
                     $morph_column_id = $sharedItem->morph_column_id;
                     //Vamos adicionar os valores da coluna de tipo e id
                     $row->{$morph_column_type} = $sharedItem->restore_momdel_name;
-                    $row->{$morph_column_id} = $parentId; 
+                    $row->{$morph_column_id} = $parentId;
                     return $row;
-                }, $rows); 
- 
+                }, $rows);
+
                 //Vamos remover os dados baseados nos filtros do shared do tipo delete ou excluir
-                static::beforeRemoveFilters($shared);   
+                static::beforeRemoveFilters($shared);
                 //Vamos pegar o nome da tabela de destino
                 $to_table = $shared->table_to;
                 //Vamos pegar as colunas da tabela de destino
-                $to_columns = static::getColumsSchema($columns, $to_table, 'column_to'); 
+                $to_columns = static::getColumsSchema($columns, $to_table, 'column_to');
                 //Vamos dividir os dados em pedaços de 1000
                 $chunks = array_chunk($rows, 1000);
                 //Vamos adicionar os jobs na fila
@@ -382,7 +400,7 @@ class RestoreHelper
         }
     }
 
-    public static function getDataValues($rows, $to_columns, $connectionTo, $tableName = null, $type = null, $restore = null, $children = null)
+    public static function getDataValues($rows, $to_columns, $connectionTo, $children = null)
     {
         $values = [];
         foreach ($rows as $row) {
@@ -422,8 +440,6 @@ class RestoreHelper
             $data['created_at'] = static::validateDate(data_get($row, 'created_at')) ? data_get($row, 'created_at') : now()->format('Y-m-d H:i:s');
             $data['updated_at'] = static::validateDate(data_get($row, 'updated_at')) ? data_get($row, 'updated_at') : now()->format('Y-m-d H:i:s');
             $data['deleted_at'] = static::validateDate(data_get($row, 'deleted_at')) ? data_get($row, 'deleted_at') : null;
-
-            // $data = static::getDataPolymorphicValues($row, $type, $tableName, $restore, $data);
 
             $data = static::getDataStatusValues($row, $data);
 

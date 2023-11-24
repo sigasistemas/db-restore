@@ -29,7 +29,7 @@ class DbRestoreJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public Restore $record, public $rows, public $to_columns, public $from_columns)
+    public function __construct(public Restore $record, public $chunks, public $to_columns, public $from_columns)
     {
         //
     }
@@ -44,7 +44,7 @@ class DbRestoreJob implements ShouldQueue
         $model = DB::connection($fromConnection)
             ->table($this->record->table_to);
 
-        $values = RestoreHelper::getDataValues($this->rows, $this->to_columns, $fromConnection);
+        $values = RestoreHelper::getDataValues(rows: $this->chunks, to_columns: $this->to_columns, connectionTo: $fromConnection);
 
         $model->insert($values);
     }

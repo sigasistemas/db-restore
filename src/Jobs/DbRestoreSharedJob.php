@@ -30,7 +30,7 @@ class DbRestoreSharedJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public Shared $record, public $chunk, public $to_columns, public $from_columns, public $restore) 
+    public function __construct(public Shared $record, public $chunks, public $to_columns, public $from_columns, public $restore) 
     {
         //
     }
@@ -40,12 +40,12 @@ class DbRestoreSharedJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $connectionTo = RestoreHelper::getConnectionCloneOptions($this->restore->connectionTo);
+        $fromConnection = RestoreHelper::getConnectionCloneOptions($this->restore->connectionTo);
 
-        $model = DB::connection($connectionTo)
+        $model = DB::connection($fromConnection)
             ->table($this->record->table_to);
 
-        $values = RestoreHelper::getDataValues($this->chunk, $this->to_columns, $connectionTo, $this->record->table_to, $this->record->type, $this->restore);
+        $values = RestoreHelper::getDataValues(rows: $this->chunks, to_columns: $this->to_columns, connectionTo: $fromConnection);
  
         $model->insert($values);
     }
