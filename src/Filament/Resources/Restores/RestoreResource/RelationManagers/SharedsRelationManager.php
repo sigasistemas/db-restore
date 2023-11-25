@@ -90,9 +90,9 @@ class SharedsRelationManager extends RelationManager
                                                                 $cloneRecord = clone $record;
                                                                 $cloneRecord->connectionTo = $ownerRecord->connectionTo;
                                                                 $cloneRecord->connectionFrom = $ownerRecord->connectionFrom;
-                                                                if (!$record->columns->count()) {
-                                                                    $this->getColumnOptions($cloneRecord, $ownerRecord->connectionFrom, $ownerRecord->connectionTo);
-                                                                }
+                                                                // if (!$record->columns->count()) {
+                                                                //     $this->getColumnOptions($cloneRecord, $ownerRecord->connectionFrom, $ownerRecord->connectionTo);
+                                                                // }
                                                                 return $this->getColumnsSchemaForm($cloneRecord);
                                                             })
                                                             ->columns(12)

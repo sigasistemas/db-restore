@@ -278,7 +278,7 @@ class RestoreHelper
                 //Vamos pegar a conexao da tabela de destino
                 $connectionName = RestoreHelper::getConnectionCloneOptions($record->connectionTo);
 
-                array_map(function ($row) use ($children,  $record,  $connectionName) {
+                $rows = collect($rows)->map(function ($row) use ($children,  $record,  $connectionName) {
                     //Vamos pegar a tabela de destino  
                     $query = DB::connection($connectionName)->table($record->table_to);
                     //Vamos pegar o valor do id da tabela de destino
@@ -290,7 +290,15 @@ class RestoreHelper
                     //Vamos adicionar os valores da coluna de tipo e id 
                     $row->{$parent} = $parentId;
                     return $row;
-                }, $rows);
+                })
+                    ->filter(function ($row) use ($children) {
+                        //Vamos verificar se a coluna polimorfica id tem valor
+                        $parent = $children->join_from_column;
+                        return !empty(data_get($row, $parent));
+                    })
+                    ->toArray();
+
+
                 //Vamos excluir os dados baseados nos filtros do filho do tipo delete ou excluir
                 static::beforeRemoveFilters($children);
                 //Vamos pegar o nome da tabela de destino
