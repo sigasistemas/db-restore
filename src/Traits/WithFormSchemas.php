@@ -236,6 +236,7 @@ trait WithFormSchemas
                 'binary' => 'Binary',
                 'enum' => 'Enum',
                 'array' => 'Array',
+                'password' => 'Password',
             ])
             ->default('string')
             ->columnSpan([

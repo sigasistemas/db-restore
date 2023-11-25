@@ -407,9 +407,15 @@ class RestoreHelper
         foreach ($rows as $row) {
             $data = [];
             foreach ($to_columns as $key => $column) {
-
+                //Se existir um valor padrão, vamos adicionar
+                //Uma opção é seria usar a função getValueType para pegar o valor padrão formatado
+                //Posibilidade para o futuro, assim mesmo sendo um valor padrão, podemos formatar o valor
                 if ($default_value = data_get($column, 'default_value')) {
-                    $data[$key] =  $default_value;
+                    if (data_get($column, 'type') == 'password') {
+                        $data[$key] =  bcrypt($default_value);
+                    } else {
+                        $data[$key] =  $default_value;
+                    }
                 } else {
                     if (in_array($key, config('tenant.default_tenant_columns'))) {
                         $data[$key] =  static::getTenantId($row);
@@ -593,7 +599,7 @@ class RestoreHelper
     }
 
     protected static function getDataSlugValues($row, $data)
-    { 
+    {
         if (isset($data['slug'])) {
             $slug = data_get($data, 'slug');
             if (!$slug) {
@@ -678,6 +684,10 @@ class RestoreHelper
                     return  json_encode($data);
                 }
                 return  [];
+
+                break;
+            case 'password':
+                return  bcrypt(data_get($chunk, $column_from, $default_value));
 
                 break;
             default:
