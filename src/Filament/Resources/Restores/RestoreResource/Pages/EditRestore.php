@@ -11,6 +11,7 @@ namespace Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource\Pages;
 use Callcocam\DbRestore\Filament\Resources\Restores\RestoreResource;
 use Callcocam\DbRestore\Forms\Components\ConnectionFromField;
 use Callcocam\DbRestore\Forms\Components\ConnectionToField;
+use Callcocam\DbRestore\Forms\Components\RestoreModelField;
 use Callcocam\DbRestore\Forms\Components\SelectColumnField;
 use Callcocam\DbRestore\Forms\Components\SelectTableField;
 use Callcocam\DbRestore\Forms\Components\SelectTableFromField;
@@ -52,7 +53,7 @@ class EditRestore extends EditRecord
         if (!$record->columns->count()) {
             $this->getColumnOptions($record, $record->connectionFrom, $record->connectionTo);
         }
-        
+
         return $form
             ->schema([
                 ConnectionFromField::make('connection_from_id')
@@ -81,11 +82,7 @@ class EditRestore extends EditRecord
                     ->columnSpan([
                         'md' => '3'
                     ]),
-                SelectTableField::make('restore_model_id')
-                    ->relationship(
-                        name: 'restoreModel',
-                        titleAttribute: 'name'
-                    )
+                RestoreModelField::makeColumn('restore_model_id')
                     ->columnSpan([
                         'md' => '3'
                     ]),
@@ -103,9 +100,9 @@ class EditRestore extends EditRecord
                     return $this->getColumnsSchemaForm($record);
                 })->visible(fn (Restore $record) => $record->table_to && $record->table_from),
                 $this->getSectionFiltersSchema(
-                    record: $record,//pode ser tanto um model connection, restore, children, import, export ou shared
-                    connection: $record->connectionFrom,// passar porque vamos a coxao de origem
-                    tableTo: $record->table_from,// passar porque vamos a tabela de origem
+                    record: $record, //pode ser tanto um model connection, restore, children, import, export ou shared
+                    connection: $record->connectionFrom, // passar porque vamos a coxao de origem
+                    tableTo: $record->table_from, // passar porque vamos a tabela de origem
                     connectionTo: $record->connectionTo //passar porque a conexao padrão é a de origem, para o campo name teremos que passar a conexao de destino
                 )->visible(fn (Restore $record) => $record->table_to),
                 $this->getSectionOrderingsSchema($record)->visible(fn (Restore $record) => $record->table_from),
