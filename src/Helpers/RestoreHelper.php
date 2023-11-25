@@ -336,7 +336,8 @@ class RestoreHelper
                 //Vamos pegar a conexao da tabela de destino
                 $connectionName = RestoreHelper::getConnectionCloneOptions($record->connectionTo);
                 //Como o shared é um relacionamento polimorfico, vamos adicionar a coluna de tipo e id
-                array_map(function ($row) use ($sharedItem, $shared, $connectionName, $record) {
+
+                $rows = collect($rows)->map(function ($row) use ($sharedItem, $shared, $connectionName, $record) {
                     //Vamos pegar a tabela de destino
                     $query = DB::connection($connectionName)->table($record->table_to)->where($shared->column_to, data_get($row, $shared->column_from));
                     //Vamos pegar o id da tabela de destino
@@ -348,8 +349,13 @@ class RestoreHelper
                     $row->{$morph_column_type} = $sharedItem->restore_momdel_name;
                     $row->{$morph_column_id} = $parentId;
                     return $row;
-                }, $rows);
-
+                })
+                    ->filter(function ($row) use ($sharedItem) {
+                        //Vamos verificar se a coluna polimorfica id tem valor
+                        $morph_column_id = $sharedItem->morph_column_id;
+                        return !empty(data_get($row, $morph_column_id));
+                    })
+                    ->toArray();
                 //Vamos remover os dados baseados nos filtros do shared do tipo delete ou excluir
                 static::beforeRemoveFilters($shared);
                 //Vamos pegar o nome da tabela de destino
