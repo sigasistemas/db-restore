@@ -27,6 +27,7 @@ return new class extends Migration
             $table->string('table_to', 255)->nullable()->comment('Nome da tabela pivot de destino');
             $table->string('column_to', 255)->nullable()->comment('Nome da coluna pivot de destino');
             $table->string('table_from', 255)->nullable()->comment('Nome da tabela pivot de origem');
+            $table->string('column_from', 255)->nullable()->comment('Nome da tabela pivot de origem');
             $table->text('description')->nullable();
             $table->enum('status', ['draft', 'published'])->nullable()->default('draft')->comment('Situação do registro'); 
             $table->ulidMorphs('pivotable');
