@@ -99,14 +99,19 @@ class EditRestore extends EditRecord
                 $this->getSectionColumnsSchema($record, function ($record) {
                     return $this->getColumnsSchemaForm($record);
                 })->visible(fn (Restore $record) => $record->table_to && $record->table_from),
+
+                $this->getSectionPivotsSchema($record)->visible(fn (Restore $record) => $record->table_to && $record->table_from),
+                
                 $this->getSectionFiltersSchema(
                     record: $record, //pode ser tanto um model connection, restore, children, import, export ou shared
                     connection: $record->connectionFrom, // passar porque vamos a coxao de origem
                     tableTo: $record->table_from, // passar porque vamos a tabela de origem
                     connectionTo: $record->connectionTo //passar porque a conexao padrão é a de origem, para o campo name teremos que passar a conexao de destino
                 )->visible(fn (Restore $record) => $record->table_to),
-                $this->getSectionOrderingsSchema($record)->visible(fn (Restore $record) => $record->table_from),
+                $this->getSectionOrderingsSchema($record)
+                    ->visible(fn (Restore $record) => $record->table_from),
                 static::getStatusFormRadioField(),
+
                 Forms\Components\Textarea::make('description')
                     ->label($this->getTraductionFormLabel('description'))
                     ->placeholder($this->getTraductionFormPlaceholder('description'))

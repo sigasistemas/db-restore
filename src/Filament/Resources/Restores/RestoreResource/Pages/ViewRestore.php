@@ -17,6 +17,7 @@ use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Bus\Batch;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class ViewRestore extends ViewRecord
@@ -31,6 +32,9 @@ class ViewRestore extends ViewRecord
                 ->icon('fas-upload')
                 ->color('success')
                 ->action(function (Restore $record) {
+
+                    $pivots = $record->pivots;
+
 
                     $columns = $record->columns;
 
@@ -65,6 +69,24 @@ class ViewRestore extends ViewRecord
                     RestoreHelper::afterGetChildresValues($record);
 
                     RestoreHelper::afterGetSharedValues($record);
+
+                    if ($pivots->count()) {
+
+                        $pivots->each(function ($pivot) use ($record) {
+                            $rows =  RestoreHelper::afterGetPivotValues($record, $pivot);
+                            $batch =  Bus::batch([])->then(function (Batch $batch) use ($record) {
+                                // All jobs completed successfully...
+                            })->catch(function (Batch $batch, Throwable $e) {
+                                // First batch job failure detected...
+                            })->finally(function (Batch $batch) use ($record) {
+                                // The batch has finished executing... 
+                            })->name($pivot->name)->dispatch();
+                            $chunks = array_chunk($rows, 1000);
+                            foreach ($chunks as $chunk) {
+                                $batch->add(new \Callcocam\DbRestore\Jobs\DbRestorePivotJob($pivot, $chunk, $record));
+                            }
+                        });
+                    }
                 }),
         ];
     }

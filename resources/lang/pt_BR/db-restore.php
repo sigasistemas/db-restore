@@ -312,6 +312,26 @@ return [
             'childrens_imports'=>[
                 'description' => 'Configuração de importação das colunas da tabelas filha ou da coluna de itens', 
             ],
+            'pivots'=>[
+                'label' => 'Selecionar pivos',
+                'description' => 'Configure os pivos para restaurar',
+            ],
+            'pivot_table_to'=>[
+                'label' => 'Tabela Pivot',
+                'placeholder' => 'Selecione',
+            ],
+            'pivot_table_from'=>[
+                'label' => 'Tabela Externa',
+                'placeholder' => 'Selecione',
+            ],
+            'pivot_column_to'=>[
+                'label' => 'Coluna Pivot',
+                'placeholder' => 'Selecione',
+            ],
+            'pivot_column_from'=>[
+                'label' => 'Coluna Pivot',
+                'placeholder' => 'Selecione',
+            ],
 
         ],
     ],

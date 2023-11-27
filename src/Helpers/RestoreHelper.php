@@ -315,6 +315,29 @@ class RestoreHelper
         }
     }
 
+    public static function afterGetPivotValues($record, $pivot)
+    {
+        $pivots = $record->pivots;
+        if ($pivots->count()) {
+
+            //Nome da tabela que pivot que vai fazer a ligação ex: role_user
+            $pivot_table_to = $pivot->table_to;
+            //Connection de destino essa
+            $connectionTo = RestoreHelper::getConnectionCloneOptions($record->connectionTo);
+            //Connection de origem 
+            $connectionFrom = RestoreHelper::getConnectionCloneOptions($record->connectionFrom);
+            //Pega todos os registros da tabela que vamos ligar de origem que faz a ligação ex: role_user
+            $rows = DB::connection($connectionFrom)->table($pivot_table_to)->get();
+            if ($rows->count()) {
+                //Verifica se existe registros na tabela que vamos ligar de destino ex: role_user e se e pra excluir
+                if ($record->type == 'exluir') {
+                    DB::connection($connectionTo)->table($pivot_table_to)->delete();
+                }
+                return $rows->toArray();
+            }
+        }
+        return [];
+    }
     public static function afterGetSharedValues($record)
     {
 
@@ -555,6 +578,31 @@ class RestoreHelper
         }
 
         return $data;
+    }
+
+
+    public static function getPivotDataValues($rows, $pivot, $restore)
+    {
+        $connectionTo = static::getConnectionCloneOptions($restore->connectionTo);
+        $values = [];
+        foreach ($rows as $row) {
+            $data = [];
+            $oldId = config('db-restore.oldId', 'old_id');
+            //Percorre todos os registros da tabela que vamos ligar de origem ex: role_user
+            //Pega o id da tabela que vamos ligar de destino ex: users
+            $pivotTo = DB::connection($connectionTo)->table($restore->table_to)->where($oldId, data_get($row, $pivot->column_to))->value('id');
+            //Pega o id da tabela que vamos ligar de origem ex: roles
+            $pivotFrom = DB::connection($connectionTo)->table($pivot->table_from)->where($oldId, data_get($row, $pivot->column_from))->value('id');
+            if ($pivotTo && $pivotFrom) {
+                $data = [];
+                $data[$pivot->column_to] = $pivotTo;
+                $data[$pivot->column_from] = $pivotFrom;
+                $data['created_at'] = now();
+                $data['updated_at'] = now();
+                $values[] = $data;
+            }
+        }
+        return $values;
     }
 
 

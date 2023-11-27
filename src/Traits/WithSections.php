@@ -42,7 +42,7 @@ trait WithSections
     public function getSectionOrderingsSchema(AbstractModelRestore $record)
     {
         return  Forms\Components\Section::make($this->getTraduction('orderings', 'restore', 'form',  'label'))
-            ->description($this->getTraduction('orderings', 'restore', 'form',  'description')) 
+            ->description($this->getTraduction('orderings', 'restore', 'form',  'description'))
             ->collapsed()
             ->schema(function () use ($record) {
                 return  [
@@ -66,7 +66,7 @@ trait WithSections
      * @return Forms\Components\Section
      */
     public function getSectionFiltersSchema(AbstractModelRestore $record, $connection = null, $tableTo = null, $connectionTo = null)
-    { 
+    {
         return Forms\Components\Section::make($this->getTraduction('filters', 'restore', 'form',  'label'))
             ->description($this->getTraduction('filters', 'restore', 'form',  'description'))
             ->collapsed()
@@ -86,6 +86,25 @@ trait WithSections
                                 $tableTo = $record->table_to;
                             }
                             return $this->getFiltersSchemaForm($connection,  $tableTo, $connectionTo);
+                        })
+                        ->columns(12)
+                        ->columnSpanFull()
+                ];
+            });
+    }
+
+    public function getSectionPivotsSchema(AbstractModelRestore $record)
+    {
+        return  Forms\Components\Section::make($this->getTraduction('pivots', 'restore', 'form',  'label'))
+            ->description($this->getTraduction('pivots', 'restore', 'form',  'description'))
+            ->collapsed()
+            ->schema(function () use ($record) {
+                return  [
+                    Forms\Components\Repeater::make('pivots')
+                        ->relationship('pivots')
+                        ->hiddenLabel()
+                        ->schema(function () use ($record) {
+                            return  $this->getPivotschemaForm($record);
                         })
                         ->columns(12)
                         ->columnSpanFull()

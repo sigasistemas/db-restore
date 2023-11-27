@@ -39,6 +39,11 @@ class Children extends AbstractModelRestore
         return $this->morphMany(Filter::class, 'filterable');
     }
 
+    public function pivots()
+    {
+        return $this->hasMany(Pivot::class, 'pivotable');
+    }
+    
     public function orderings()
     {
         return $this->morphMany(Ordering::class, 'orderingable')->orderBy('ordering', 'ASC');

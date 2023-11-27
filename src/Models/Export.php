@@ -53,6 +53,11 @@ class Export extends AbstractModelRestore
         return $this->morphMany(Ordering::class, 'orderingable')->orderBy('ordering', 'ASC');
     }
 
+    public function pivots()
+    {
+        return $this->hasMany(Pivot::class, 'pivotable');
+    }
+    
     public function childrens()
     {
         return $this->morphMany(Children::class, 'childrenable');

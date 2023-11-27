@@ -12,6 +12,7 @@ use Callcocam\DbRestore\Forms\Components\SelectColumnField;
 use Callcocam\DbRestore\Forms\Components\SelectColumnFromField;
 use Callcocam\DbRestore\Forms\Components\SelectColumnToField;
 use Callcocam\DbRestore\Forms\Components\SelectTableField;
+use Callcocam\DbRestore\Forms\Components\SelectTableFromField;
 use Callcocam\DbRestore\Forms\Components\SelectTableToField;
 use Callcocam\DbRestore\Forms\Components\TextareaField;
 use Callcocam\DbRestore\Forms\Components\TextInputField;
@@ -75,7 +76,7 @@ trait WithFormSchemas
     protected function getColumnsSchemaFileForm($record, $relation = 'relation')
     {
         $columns = [];
-      if (empty($record->file)) {
+        if (empty($record->file)) {
             return [];
         }
         if (Storage::exists($record->file)) {
@@ -344,6 +345,46 @@ trait WithFormSchemas
         ];
     }
 
+    protected function getPivotschemaForm($record)
+    {
+        return [
+            Section::make()
+                ->schema(function () use ($record) {
+                    return [
+                        TextInputField::make('name')
+                            ->required()
+                            ->columnSpan([
+                                'md' => '2',
+                            ]),
+                        SelectTableToField::makeTable('table_to', $record, 'pivot_table_to')
+                            ->live()
+                            ->required()
+                            ->columnSpan([
+                                'md' => '2',
+                            ]),
+                        SelectColumnToField::makeToOptions('column_to', $record, 'table_to', 'pivot_column_to')
+                            ->required()
+                            ->columnSpan([
+                                'md' => '3',
+                            ]),
+
+                        SelectTableToField::makeTable('table_from', $record, 'pivot_table_from')
+                            ->live()
+                            ->required()
+                            ->columnSpan([
+                                'md' => '2',
+                            ]),
+                        SelectColumnToField::makeToOptions('column_from', $record, 'table_to', 'pivot_column_from')
+                            ->required()
+                            ->columnSpan([
+                                'md' => '3',
+                            ]),
+
+                    ];
+                })
+                ->columns(12)
+        ];
+    }
 
     protected function getsearchDefaultValueSchemaForm($column)
     {

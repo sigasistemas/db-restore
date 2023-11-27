@@ -58,6 +58,11 @@ class Restore extends AbstractModelRestore
         return $this->morphMany(Children::class, 'childrenable');
     }
 
+    public function pivots()
+    {
+        return $this->morphMany(Pivot::class, 'pivotable');
+    }
+
     public function shareds()
     {
         return $this->hasMany(SharedItem::class);
