@@ -166,7 +166,7 @@ class DbRestoreServiceProvider extends PackageServiceProvider
             'create_imports_table',
             'create_exports_table',
             'create_orderings_table',
-            'create_defaults_table',
+            'create_defalts_table',
             'create_shared_items_table',
             'create_shareds_table',
             'create_pivots_table',
