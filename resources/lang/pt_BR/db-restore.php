@@ -51,6 +51,10 @@ return [
             ],
         ],
         'form' => [
+            'tenant_id' => [
+                'label' => 'Tenant',
+                'placeholder' => 'Selecione o tenant',
+            ],
             'name' => [
                 'label' => 'Nome',
                 'placeholder' => 'Digite o nome',

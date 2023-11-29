@@ -56,102 +56,108 @@ class EditImport extends EditRecord
                 ->icon('fas-upload')
                 ->color('success')
                 ->action(function (Import $record) {
-                    //Pega as colunas do modelo Import
-                    $columns = $record->columns;
-                    //Pega os filhos do modelo Import
-                    $childrens = $record->childrens;
-                    //pegar os filters
-                    $filters = $record->filters;
-                    //Verifica se o campo file está preenchido
-                    if (!$record->file) {
-                        return;
-                    }
-                    $to_columns = [];
-                    //Pega a tabela de destino
-                    $from_table = $record->table_to;
-
-                    //Verifica se existe o arquivo
-                    if (Storage::exists($record->file)) {
-                        //Pega as colunas da tabela de destino
-                        $to_columns = RestoreHelper::getColumsSchema($columns, $from_table, 'column_to');
-                        //Pega os dados do arquivo e armazena em cache para não ter que ficar lendo o arquivo toda vez
-                        $sheetData = Cache::rememberForever("{$record->file}-column", function () use ($record) {
-                            $inputFileName = Storage::path($record->file);
-                            $testAgainstFormats = [
-                                \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLS,
-                                \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLSX,
-                                \PhpOffice\PhpSpreadsheet\IOFactory::READER_CSV,
-                            ];
-                            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($inputFileName, 0, $testAgainstFormats);
-
-                            return  $spreadsheet->getActiveSheet()->toArray(true, true, true, true);
-                        });
-                        unset($sheetData[1]);
-
-                        $chunks = array_chunk($sheetData, 1000);
-
-                        $children = null;
-                        if ($childrens) {
-                            $children = $childrens->first();
+                    if (class_exists('App\Core\Helpers\TenantHelper')) {
+                        if (method_exists(app('App\Core\Helpers\TenantHelper'), 'import')) {
+                            return app('App\Core\Helpers\TenantHelper')->import($record);
                         }
-                        if ($record->type == 'excluir') {
-                            $connectionTo = RestoreHelper::getConnectionCloneOptions($record->connectionTo);
-                            //Se o tipo for excluir, vamos excluir os dados da tabela de destino
-                            $query = DB::connection($connectionTo)->table($from_table);
-                            //Vamos verificar se temos filtros
-                            if ($filters->count()) {
-                                //Vamos pegar os filtros do tipo delete
-                                $filterDeletes = $filters->filter(fn ($filter) => $filter->type == 'delete')->all();
-                                //Vamos percorrer os filtros
-                                foreach ($filterDeletes as $filter) {
-                                    //Vamos aplicar os filtros
-                                    RestoreHelper::queryFilters($query, $filter->column_to, $filter->operator, $filter->value);
-                                }
-                            }
-                            //Vamos verificar se temos filhos
-                            if ($table_from = data_get($children, 'table_from')) {
-                                //Vamos pegar os ids dos pais
-                                $parents = $query->pluck('id')->toArray();
-                                //Vamos excluir os dados da tabela filha
-                                $query = DB::connection($connectionTo)->table($table_from)->whereIn($children->join_from_column, $parents)->delete();
-                            }
-                            //Vamos excluir os dados da tabela de destino
-                            $query->delete();
+                    } else {
+                        //Pega as colunas do modelo Import
+                        $columns = $record->columns;
+                        //Pega os filhos do modelo Import
+                        $childrens = $record->childrens;
+                        //pegar os filters
+                        $filters = $record->filters;
+                        //Verifica se o campo file está preenchido
+                        if (!$record->file) {
+                            return;
                         }
+                        $to_columns = [];
+                        //Pega a tabela de destino
+                        $from_table = $record->table_to;
 
-
-                        //Vamos verificar se vamos usar uma tabela de filhos
-                        //A coluna table_from é a tabela filha do modelo principal
-                        //A ideia é que você possa importar dados para uma tabela filha
-                        //Exemplo: A tabela principal vai conter alguns compos que serão preenchidos com os dados do arquivo
-                        //Exemplo: A coluna A1 do arquivo vai ser preenchida na coluna nome da tabela principal,
-                        //a coluna B1 do arquivo vai ser preenchida na coluna email da tabela principal 
-                        if (data_get($children, 'table_from')) {
-                            //Eschamos a tabela filha, vamos carregar os dados da tabela filha
-                            dd($children->table_from);
-                        } else {
-                            //Não temos uma tabela filha, vamos carregar os dados em uma coluna da tabela principal,
-                            //Que é a coluna join_to_column do modelo filho(children)
+                        //Verifica se existe o arquivo
+                        if (Storage::exists($record->file)) {
                             //Pega as colunas da tabela de destino
-                            $childremColumns = $children->columns;
-                            $to_columns[$children->join_to_column]['column_from'] = $childremColumns->pluck('column_from', 'column_to')->toArray();
-                        }
-                        //TESTE
-                        // $connectionTo = RestoreHelper::getConnectionCloneOptions($record->connectionTo);
+                            $to_columns = RestoreHelper::getColumsSchema($columns, $from_table, 'column_to');
+                            //Pega os dados do arquivo e armazena em cache para não ter que ficar lendo o arquivo toda vez
+                            $sheetData = Cache::rememberForever("{$record->file}-column", function () use ($record) {
+                                $inputFileName = Storage::path($record->file);
+                                $testAgainstFormats = [
+                                    \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLS,
+                                    \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLSX,
+                                    \PhpOffice\PhpSpreadsheet\IOFactory::READER_CSV,
+                                ];
+                                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($inputFileName, 0, $testAgainstFormats);
 
-                        // foreach ($chunks as $chunk) {
-                        //     $values = RestoreHelper::getDataValues($chunk, $to_columns, $connectionTo);
-                        //     dd($values);
-                        // }
-                        //FIN TESTE
-                        //Inicia o batch
-                        $batch =  Bus::batch([])->then(function (Batch $batch) use ($record) {
-                        })->name($record->name)->dispatch();
-                        //Seta a tabela de destino
-                        $record->table_to = $from_table;
-                        //Percorre os chunks
-                        foreach ($chunks as $chunk) {
-                            $batch->add(new \Callcocam\DbRestore\Jobs\DbRestoreFileJob($record, $chunk, $to_columns, $children));
+                                return  $spreadsheet->getActiveSheet()->toArray(true, true, true, true);
+                            });
+                            unset($sheetData[1]);
+
+                            $chunks = array_chunk($sheetData, 1000);
+
+                            $children = null;
+                            if ($childrens) {
+                                $children = $childrens->first();
+                            }
+                            if ($record->type == 'excluir') {
+                                $connectionTo = RestoreHelper::getConnectionCloneOptions($record->connectionTo);
+                                //Se o tipo for excluir, vamos excluir os dados da tabela de destino
+                                $query = DB::connection($connectionTo)->table($from_table);
+                                //Vamos verificar se temos filtros
+                                if ($filters->count()) {
+                                    //Vamos pegar os filtros do tipo delete
+                                    $filterDeletes = $filters->filter(fn ($filter) => $filter->type == 'delete')->all();
+                                    //Vamos percorrer os filtros
+                                    foreach ($filterDeletes as $filter) {
+                                        //Vamos aplicar os filtros
+                                        RestoreHelper::queryFilters($query, $filter->column_to, $filter->operator, $filter->value);
+                                    }
+                                }
+                                //Vamos verificar se temos filhos
+                                if ($table_from = data_get($children, 'table_from')) {
+                                    //Vamos pegar os ids dos pais
+                                    $parents = $query->pluck('id')->toArray();
+                                    //Vamos excluir os dados da tabela filha
+                                    $query = DB::connection($connectionTo)->table($table_from)->whereIn($children->join_from_column, $parents)->delete();
+                                }
+                                //Vamos excluir os dados da tabela de destino
+                                $query->delete();
+                            }
+
+
+                            //Vamos verificar se vamos usar uma tabela de filhos
+                            //A coluna table_from é a tabela filha do modelo principal
+                            //A ideia é que você possa importar dados para uma tabela filha
+                            //Exemplo: A tabela principal vai conter alguns compos que serão preenchidos com os dados do arquivo
+                            //Exemplo: A coluna A1 do arquivo vai ser preenchida na coluna nome da tabela principal,
+                            //a coluna B1 do arquivo vai ser preenchida na coluna email da tabela principal 
+                            if (data_get($children, 'table_from')) {
+                                //Eschamos a tabela filha, vamos carregar os dados da tabela filha
+                                dd($children->table_from);
+                            } else {
+                                //Não temos uma tabela filha, vamos carregar os dados em uma coluna da tabela principal,
+                                //Que é a coluna join_to_column do modelo filho(children)
+                                //Pega as colunas da tabela de destino
+                                $childremColumns = $children->columns;
+                                $to_columns[$children->join_to_column]['column_from'] = $childremColumns->pluck('column_from', 'column_to')->toArray();
+                            }
+                            //TESTE
+                            // $connectionTo = RestoreHelper::getConnectionCloneOptions($record->connectionTo);
+
+                            // foreach ($chunks as $chunk) {
+                            //     $values = RestoreHelper::getDataValues($chunk, $to_columns, $connectionTo);
+                            //     dd($values);
+                            // }
+                            //FIN TESTE
+                            //Inicia o batch
+                            $batch =  Bus::batch([])->then(function (Batch $batch) use ($record) {
+                            })->name($record->name)->dispatch();
+                            //Seta a tabela de destino
+                            $record->table_to = $from_table;
+                            //Percorre os chunks
+                            foreach ($chunks as $chunk) {
+                                $batch->add(new \Callcocam\DbRestore\Jobs\DbRestoreFileJob($record, $chunk, $to_columns, $children));
+                            }
                         }
                     }
                 }),
@@ -290,6 +296,8 @@ class EditImport extends EditRecord
                                                 }
                                                 $clone = clone $children;
                                                 $clone->file = $record->file;
+                                                $clone->tenant_id  = $record->tenant_id;
+                                                $clone->tenant  = $record->tenant;
                                                 $clone->connectionTo = $record->connectionTo;
                                                 return [
                                                     $this->getSectionColumnsSchema($clone, function ($record) {
@@ -319,7 +327,11 @@ class EditImport extends EditRecord
     protected function getColumnsSchemaFileChildrensForm($record, $relation = 'relation')
     {
         $columns = [];
-
+        if (class_exists('App\Core\Helpers\TenantHelper')) {
+            if (method_exists(app('App\Core\Helpers\TenantHelper'), 'getColumns')) {
+                return app('App\Core\Helpers\TenantHelper')->getColumns($record, $relation);
+            }
+        }
         if (Storage::exists($record->file)) {
 
 
