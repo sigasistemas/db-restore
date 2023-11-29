@@ -11,6 +11,7 @@ namespace Callcocam\DbRestore\Filament\Resources\Restores\ExportResource\Pages;
 use  Callcocam\DbRestore\Filament\Resources\Restores\ExportResource;
 use Callcocam\DbRestore\Forms\Components\ConnectionToField;
 use Callcocam\DbRestore\Forms\Components\SelectColumnField;
+use Callcocam\DbRestore\Forms\Components\SelectTableField;
 use Callcocam\DbRestore\Forms\Components\SelectTableToField;
 use Callcocam\DbRestore\Forms\Components\TextareaField;
 use Callcocam\DbRestore\Forms\Components\TextInputField;
@@ -107,7 +108,7 @@ class EditExport extends EditRecord
             ->schema([
                 TextInputField::make('name')
                     ->columnSpan([
-                        'md' => 5
+                        'md' => 3
                     ])
                     ->required(),
                 ConnectionToField::make('connection_id')
@@ -118,7 +119,13 @@ class EditExport extends EditRecord
                 SelectColumnField::make('restore_model_id')
                     ->relationship('restoreModel', 'name')
                     ->columnSpan([
-                        'md' => 4
+                        'md' => 3
+                    ]),
+
+                SelectTableField::make('tenant_id')
+                    ->relationship('tenant', 'name')
+                    ->columnSpan([
+                        'md' => 3
                     ]),
                 TextInputField::make('file')
                     ->readOnly()

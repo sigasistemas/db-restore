@@ -5,7 +5,8 @@
 * https://www.sigasmart.com.br
 */
 namespace Callcocam\DbRestore\Models;
- 
+
+use Callcocam\Tenant\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory; 
 
 class Restore extends AbstractModelRestore
@@ -18,6 +19,11 @@ class Restore extends AbstractModelRestore
 
     protected $with = ['connectionFrom', 'connectionTo', 'columns', 'filters', 'orderings', 'childrens', 'shareds'];
 
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+    
     public function connections()
     {
         return $this->belongsTo(Connection::class);

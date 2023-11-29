@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Callcocam\DbRestore\Models\Column;
 use Callcocam\DbRestore\Models\Connection;
 use Callcocam\DbRestore\Models\Model;
+use Callcocam\Tenant\Models\Tenant;
 
 class Import extends AbstractModelRestore
 {
@@ -20,6 +21,11 @@ class Import extends AbstractModelRestore
     protected $table = 'restore_imports';
 
     protected $with = ['connectionFrom', 'connectionTo', 'columns', 'filters', 'orderings', 'childrens'];
+    
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
     
     public function connectionTo()
     {

@@ -36,7 +36,7 @@ class CreateExport extends CreateRecord
                     ])
                     ->required(),
                 ConnectionField::make('connection_id')
-                    ->relationship(name: 'connectionTo', titleAttribute: 'name', modifyQueryUsing: fn (Builder $query) => $query->whereType('to'),)
+                    ->relationship(name: 'connectionTo', titleAttribute: 'name' )
                     ->columnSpan([
                         'md' => 6
                     ])

@@ -10,6 +10,7 @@ namespace Callcocam\DbRestore\Filament\Resources\Restores\ImportResource\Pages;
 
 use Callcocam\DbRestore\Filament\Resources\Restores\ImportResource;
 use Callcocam\DbRestore\Forms\Components\ConnectionToField;
+use Callcocam\DbRestore\Forms\Components\RestoreModelField;
 use Callcocam\DbRestore\Forms\Components\SelectColumnField;
 use Callcocam\DbRestore\Forms\Components\SelectColumnToField;
 use Callcocam\DbRestore\Forms\Components\SelectTableField;
@@ -117,7 +118,7 @@ class EditImport extends EditRecord
                             //Vamos excluir os dados da tabela de destino
                             $query->delete();
                         }
-                       
+
 
                         //Vamos verificar se vamos usar uma tabela de filhos
                         //A coluna table_from é a tabela filha do modelo principal
@@ -172,7 +173,7 @@ class EditImport extends EditRecord
             ->schema([
                 TextInputField::makeText('name')
                     ->columnSpan([
-                        'md' => 5
+                        'md' => 3
                     ])
                     ->required(),
                 ConnectionToField::make('connection_id')
@@ -180,12 +181,16 @@ class EditImport extends EditRecord
                         'md' => 3
                     ])
                     ->required(),
-                SelectTableField::make('restore_model_id')
-                    ->relationship('restoreModel', 'name')
+                SelectTableField::make('tenant_id')
+                    ->relationship('tenant', 'name')
                     ->columnSpan([
-                        'md' => 4
+                        'md' => 3
                     ]),
                 SelectTableToField::makeTable('table_to', $record)
+                    ->columnSpan([
+                        'md' => 3
+                    ]),
+                RestoreModelField::makeColumn('restore_model_id')
                     ->columnSpan([
                         'md' => 4
                     ]),
@@ -333,7 +338,13 @@ class EditImport extends EditRecord
         }
         $columns[] = SelectColumnField::make('column_to', $record)
             ->options(function () use ($record) {
-                return DB::connection(RestoreHelper::getConnectionCloneOptions($record->connectionTo))->table($record->table_to)->pluck('name', 'id')->toArray();
+                if (class_exists('App\Core\Helpers\TenantHelper')) {
+                    if (method_exists(app('App\Core\Helpers\TenantHelper'), 'getTables')) {
+                        return app('App\Core\Helpers\TenantHelper')->getTables($record);
+                    }
+                } else {
+                    return DB::connection(RestoreHelper::getConnectionCloneOptions($record->connectionTo))->table($record->table_to)->pluck('name', 'id')->toArray();
+                }
             })
             ->required()->columnSpan([
                 'md' => '2',

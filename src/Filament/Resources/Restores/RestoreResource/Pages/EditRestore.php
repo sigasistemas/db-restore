@@ -59,19 +59,25 @@ class EditRestore extends EditRecord
                 ConnectionFromField::make('connection_from_id')
                     ->required()
                     ->columnSpan([
-                        'md' => '4'
+                        'md' => 3
                     ]),
                 ConnectionToField::make('connection_to_id')
                     ->required()
                     ->columnSpan([
-                        'md' => '4'
+                        'md' => 3
                     ]),
                 TextInputField::make('name')
                     ->required()
                     ->columnSpan([
-                        'md' => '4'
+                        'md' => 3
                     ])
                     ->maxLength(255),
+
+                SelectTableField::make('tenant_id')
+                    ->relationship('tenant', 'name')
+                    ->columnSpan([
+                        'md' => 3
+                    ]),
                 SelectTableFromField::makeTable('table_from', $record)
                     ->required()
                     ->columnSpan([
@@ -101,7 +107,7 @@ class EditRestore extends EditRecord
                 })->visible(fn (Restore $record) => $record->table_to && $record->table_from),
 
                 $this->getSectionPivotsSchema($record)->visible(fn (Restore $record) => $record->table_to && $record->table_from),
-                
+
                 $this->getSectionFiltersSchema(
                     record: $record, //pode ser tanto um model connection, restore, children, import, export ou shared
                     connection: $record->connectionFrom, // passar porque vamos a coxao de origem

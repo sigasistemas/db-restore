@@ -12,6 +12,7 @@ use Callcocam\DbRestore\Models\Column;
 use Callcocam\DbRestore\Models\Connection;
 use Callcocam\DbRestore\Models\Filter;
 use Callcocam\DbRestore\Models\Model;
+use Callcocam\Tenant\Models\Tenant;
 
 class Export extends AbstractModelRestore
 {
@@ -23,6 +24,11 @@ class Export extends AbstractModelRestore
 
     protected $with = ['connectionFrom', 'connectionTo', 'columns', 'filters', 'orderings'];   
 
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
+    
     public function connectionTo()
     {
         return $this->belongsTo(Connection::class , 'connection_id');
