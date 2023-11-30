@@ -170,6 +170,7 @@ class DbRestoreServiceProvider extends PackageServiceProvider
             'create_shared_items_table',
             'create_shareds_table',
             'create_pivots_table',
+            'create_samples_table'
         ];
     }
 }

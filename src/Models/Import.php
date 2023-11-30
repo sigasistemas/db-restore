@@ -61,4 +61,9 @@ class Import extends AbstractModelRestore
     {
         return $this->morphMany(Children::class, 'childrenable');
     }
+
+    public function samples()
+    {
+        return $this->hasMany(Sample::class, 'import_id');
+    }
 }

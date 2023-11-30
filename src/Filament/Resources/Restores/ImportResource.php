@@ -1,14 +1,16 @@
 <?php
 
 /**
-* Created by Claudio Campos.
-* User: callcocam@gmail.com, contato@sigasmart.com.br
-* https://www.sigasmart.com.br
-*/
+ * Created by Claudio Campos.
+ * User: callcocam@gmail.com, contato@sigasmart.com.br
+ * https://www.sigasmart.com.br
+ */
+
 namespace Callcocam\DbRestore\Filament\Resources\Restores;
 
 use Callcocam\DbRestore\Filament\Resources\Restores\ImportResource\Pages;
 use Callcocam\DbRestore\Filament\Resources\Restores\ImportResource\RelationManagers;
+use Callcocam\DbRestore\Filament\Resources\Restores\ImportResource\RelationManagers\SamplesRelationManager;
 use Callcocam\DbRestore\Models\Import;
 use Callcocam\DbRestore\Traits\HasDatesFormForTableColums;
 use Callcocam\DbRestore\Traits\HasStatusColumn;
@@ -27,17 +29,17 @@ class ImportResource extends Resource
 
     // protected static ?string $model = Import::class;
 
-    protected static ?string $navigationIcon = 'fas-file-import'; 
-    
+    protected static ?string $navigationIcon = 'fas-file-import';
+
 
     protected static ?int $navigationSort = 2;
 
-    
+
     public static function getModel(): string
     {
         return config('db-restore.models.import', Import::class);
     }
-    
+
     public static function getNavigationGroup(): ?string
     {
         return 'Restores';
@@ -87,7 +89,7 @@ class ImportResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            SamplesRelationManager::class
         ];
     }
 

@@ -15,6 +15,7 @@ use Callcocam\DbRestore\Forms\Components\SelectTableField;
 use Callcocam\DbRestore\Forms\Components\SelectTableToField;
 use Callcocam\DbRestore\Forms\Components\TextareaField;
 use Callcocam\DbRestore\Forms\Components\TextInputField;
+use Callcocam\DbRestore\Helpers\FileHelper;
 use Callcocam\DbRestore\Helpers\RestoreHelper;
 use  Callcocam\DbRestore\Models\Export;
 use Callcocam\DbRestore\Traits\HasDatesFormForTableColums;
@@ -46,52 +47,20 @@ class EditExport extends EditRecord
                 ->label($this->getTraduction('export', 'export', 'action',  'label'))
                 ->action(function (Export $record) {
 
-                    $columns = $record->columns;
+                    $columns = $record->columns; 
 
-                    $file = new Spreadsheet();
-                    $file->getProperties()
-                        ->setCreator('Callcocam')
-                        ->setLastModifiedBy('Callcocam')
-                        ->setTitle($record->name)
-                        ->setSubject($record->name)
-                        ->setDescription($record->description ?? '');
-                    $sheet = $file->getActiveSheet();
-
-                    $sheet->setTitle($record->name);
-                    foreach ($columns as   $column) {
-                        $sheet->setCellValue(sprintf('%s1', $column->column_from), Str::title($column->column_to));
-                    }
                     $rows = RestoreHelper::getFromDatabaseRows($record, $record->table_from);
 
                     $to_columns = RestoreHelper::getColumsSchema($columns, $record->table_from, 'column_to');
 
                     $values = RestoreHelper::getDataExportValues($rows, $to_columns, $record->connectionTo);
-                    $key = 1;
-                    foreach ($values as   $row) {
-                        $key++;
-                        foreach ($columns as   $column) {
-                            $sheet->setCellValue(sprintf('%s%s', $column->column_from, $key), data_get($row, $column->column_to));
-                        }
-                    }
-                    $class = \PhpOffice\PhpSpreadsheet\Writer\Pdf\Mpdf::class;
-                    \PhpOffice\PhpSpreadsheet\IOFactory::registerWriter('Pdf', $class);
-                    $extensions = [
-                        'csv' => \PhpOffice\PhpSpreadsheet\IOFactory::WRITER_CSV,
-                        'xls' => \PhpOffice\PhpSpreadsheet\IOFactory::WRITER_XLS,
-                        'xlsx' => \PhpOffice\PhpSpreadsheet\IOFactory::WRITER_XLSX,
-                        'pdf' => 'Pdf',
-                    ];
-                    $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($file,  data_get($extensions, $record->extension));
-
-
-
-                    $file_name =  storage_path(sprintf('app/public/%s', sprintf('%s.%s', $record->slug, $record->extension)));
-
-                    $writer->save($file_name);
-
-                    $record->update([
-                        'file' => sprintf('%s.%s', $record->slug, $record->extension),
-                    ]);
+                    FileHelper::make($record)
+                        ->fileName()
+                        ->sheet()
+                        ->columns('column_from', 'column_to')
+                        ->writer()
+                        ->rows($values)
+                        ->save(); 
 
                     return Storage::disk($record->disk)->download(sprintf('%s.%s', $record->slug, $record->extension));
                 }),

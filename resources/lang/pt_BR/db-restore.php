@@ -5,22 +5,22 @@ return [
     'import' => [
         'singular' => 'Importar',
         'plural' => 'Importar',
-        'form'=>[
-            'table_from'=>[
-                'label'=>'Tabela de destino',
-                'placeholder'=>'Selecione'
+        'form' => [
+            'table_from' => [
+                'label' => 'Tabela de destino',
+                'placeholder' => 'Selecione'
             ],
-            'table_to'=>[
-                'label'=>'Tabela de campos',
-                'placeholder'=>'Selecione'
+            'table_to' => [
+                'label' => 'Tabela de campos',
+                'placeholder' => 'Selecione'
             ],
-            'join_from_column'=>[
-                'label'=>'Coluna de junção para',
-                'placeholder'=>'Selecione'
+            'join_from_column' => [
+                'label' => 'Coluna de junção para',
+                'placeholder' => 'Selecione'
             ],
-            'join_to_column'=>[
-                'label'=>'Coluna de junção de',
-                'placeholder'=>'Selecione'
+            'join_to_column' => [
+                'label' => 'Coluna de junção de',
+                'placeholder' => 'Selecione'
             ]
         ]
     ],
@@ -48,6 +48,9 @@ return [
             ],
             'shared_id' => [
                 'label' => 'Compartilhamento',
+            ],
+            'file' => [
+                'label' => 'Arquivo',
             ],
         ],
         'form' => [
@@ -88,7 +91,7 @@ return [
                 'placeholder' => 'Digite o valor padrão',
             ],
             'searchDefaultValue' => [
-                'label' => 'Buscar valor padrão', 
+                'label' => 'Buscar valor padrão',
             ],
             'connection' => [
                 'label' => 'Conexão',
@@ -290,50 +293,62 @@ return [
                 'label' => 'Prioridade',
                 'placeholder' => 'Selecione a prioridade',
             ],
-            'relation_column_from'=>[
+            'relation_column_from' => [
                 'label' => 'Valor do filtro',
                 'placeholder' => 'Selecione',
             ],
-            'shared_id'=>[
+            'shared_id' => [
                 'label' => 'Compartilhamento',
                 'placeholder' => 'Selecione',
             ],
-            'morph_column_type'=>[
+            'morph_column_type' => [
                 'label' => 'Coluna type',
                 'placeholder' => 'Selecione',
             ],
-            'morph_column_id'=>[
+            'morph_column_id' => [
                 'label' => 'Coluna id',
                 'placeholder' => 'Selecione',
             ],
-            'table_from_import'=>[
+            'table_from_import' => [
                 'label' => 'Tabela de destino',
                 'placeholder' => 'Selecione',
             ],
-            'column_imports'=>[
-                'label' => 'Configuração de importação das colunas da tabela principal', 
+            'column_imports' => [
+                'label' => 'Configuração de importação das colunas da tabela principal',
             ],
-            'childrens_imports'=>[
-                'description' => 'Configuração de importação das colunas da tabelas filha ou da coluna de itens', 
+            'childrens_imports' => [
+                'description' => 'Configuração de importação das colunas da tabelas filha ou da coluna de itens',
             ],
-            'pivots'=>[
+            'pivots' => [
                 'label' => 'Selecionar pivos',
                 'description' => 'Configure os pivos para restaurar',
             ],
-            'pivot_table_to'=>[
+            'pivot_table_to' => [
                 'label' => 'Tabela Pivot',
                 'placeholder' => 'Selecione',
             ],
-            'pivot_table_from'=>[
+            'pivot_table_from' => [
                 'label' => 'Tabela Externa',
                 'placeholder' => 'Selecione',
             ],
-            'pivot_column_to'=>[
+            'pivot_column_to' => [
                 'label' => 'Coluna Pivot',
                 'placeholder' => 'Selecione',
             ],
-            'pivot_column_from'=>[
+            'pivot_column_from' => [
                 'label' => 'Coluna Pivot',
+                'placeholder' => 'Selecione',
+            ],
+            'table_to_import_fields' => [
+                'label' => 'Tabela de campos',
+                'placeholder' => 'Selecione',
+            ],
+            'column_from_file' => [
+                'label' => 'Coluna do arquivo',
+                'placeholder' => 'Selecione',
+            ],
+            'import' => [
+                'label' => 'Importados',
                 'placeholder' => 'Selecione',
             ],
 

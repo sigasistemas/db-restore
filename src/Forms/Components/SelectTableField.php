@@ -34,7 +34,7 @@ class SelectTableField extends Select
 
     public function getTablesOptions($connection, $prefix = 'from')
     {
-         
+
         if ($connection instanceof Connection) {
             return $this->getTables($connection, $prefix);
         } elseif (is_string($connection)) {
@@ -47,6 +47,23 @@ class SelectTableField extends Select
         }
         return [];
     }
+
+    public function tablesOptions($connection, $prefix = 'from')
+    {
+
+        if ($connection instanceof Connection) {
+            $this->options($this->getTables($connection, $prefix));
+        } elseif (is_string($connection)) {
+            $connection =  Cache::rememberForever($connection, function () use ($connection) {
+                return Connection::find($connection);
+            });
+            if ($connection) {
+                $this->options($this->getTables($connection, $prefix));
+            }
+        }
+        return $this;
+    }
+
 
     protected function getTables(Connection $connection, $prefix = 'from')
     {

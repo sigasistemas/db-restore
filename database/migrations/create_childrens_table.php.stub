@@ -24,9 +24,9 @@ return new class extends Migration
                 $table->ulid('restore_id')->nullable();
             }
             $table->string('name')->comment('Nome do filtro');
-            $table->string('slug')->unique()->comment('Slug do filtro');
-            $table->string('table_from')->comment('Tabela de origem');
-            $table->string('table_to')->comment('Tabela de destino');
+            $table->string('slug')->comment('Slug do filtro');
+            $table->string('table_from')->nullable()->comment('Tabela de origem');
+            $table->string('table_to')->nullable()->comment('Tabela de destino');
             $table->string('join_from_column')->nullable()->comment('Coluna de junção da tabela de origem');
             $table->string('join_to_column')->nullable()->comment('Coluna de junção da tabela de destino'); 
             $table->enum('relation_type', ['one-to-one', 'one-to-many', 'one-to-many-inverse','polymorphic'])->default('one-to-one')->comment('Tipo de relacionamento');

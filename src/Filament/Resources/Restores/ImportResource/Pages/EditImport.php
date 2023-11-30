@@ -18,9 +18,11 @@ use Callcocam\DbRestore\Forms\Components\SelectTableFromField;
 use Callcocam\DbRestore\Forms\Components\SelectTableToField;
 use Callcocam\DbRestore\Forms\Components\TextareaField;
 use Callcocam\DbRestore\Forms\Components\TextInputField;
+use Callcocam\DbRestore\Helpers\FileHelper;
 use Callcocam\DbRestore\Models\Import;
 use Callcocam\DbRestore\Helpers\RestoreHelper;
 use Callcocam\DbRestore\Models\Children;
+use Callcocam\DbRestore\Models\Sample;
 use Callcocam\DbRestore\Traits\HasStatusColumn;
 use Callcocam\DbRestore\Traits\HasTraduction;
 use Callcocam\DbRestore\Traits\HasUploadFormField;
@@ -34,13 +36,13 @@ use Filament\Forms;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
-use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Bus\Batch;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class EditImport extends EditRecord
 {
@@ -51,7 +53,37 @@ class EditImport extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('sample')
+                ->icon('fas-file-import')
+                ->color('warning')
+                ->label('Gerar um modelo')
+                ->form([
+                    SelectColumnField::make('import')
+                        ->options(Sample::query()->pluck('name', 'id')->toArray())
+                        ->searchable()
+                        ->columnSpanFull()
+                        ->required(),
+                    TextareaField::makeText('description')
+                        ->columnSpanFull()
+
+                ])
+                ->action(function (array $data) {
+                    $record = Sample::query()->find($data['import']);
+
+                    if ($record) {
+                        FileHelper::make($record)
+                            ->fileName()
+                            ->sheet()
+                            ->columns() 
+                            ->writer()
+                            ->save(); 
+                        
+
+                        return Storage::disk($record->disk)->download(sprintf('%s.%s', $record->slug, $record->extension));
+                    }
+                }),
             Actions\Action::make('Restore')
+                ->label('Importar')
                 ->visible(fn (Import $record) => $record->columns->count() > 0)
                 ->icon('fas-upload')
                 ->color('success')
@@ -189,6 +221,7 @@ class EditImport extends EditRecord
                     ->required(),
                 SelectTableField::make('tenant_id')
                     ->relationship('tenant', 'name')
+                    ->searchable()
                     ->columnSpan([
                         'md' => 3
                     ]),
@@ -284,7 +317,7 @@ class EditImport extends EditRecord
                                             ->columnSpan([
                                                 'md' => 3
                                             ]),
-                                        SelectTableToField::makeTable('table_to', $record)
+                                        SelectTableToField::makeTable('table_to', $record, 'table_to_import_fields')
                                             ->columnSpan([
                                                 'md' => 2
                                             ]),
@@ -332,6 +365,9 @@ class EditImport extends EditRecord
                 return app('App\Core\Helpers\TenantHelper')->getColumns($record, $relation);
             }
         }
+        if (!$record->file) {
+            return $columns;
+        }
         if (Storage::exists($record->file)) {
 
 
@@ -339,8 +375,11 @@ class EditImport extends EditRecord
 
 
             $headers = array_filter($headers);
+            foreach ($headers as $key => $header) {
+                $headers[$key] = sprintf("%s - %s", $key, $header);
+            }
 
-            $columns[] = SelectColumnField::make('column_from')
+            $columns[] = SelectColumnField::make('column_from', null, 'column_from_file')
                 ->options(function () use ($headers) {
                     return $headers;
                 })

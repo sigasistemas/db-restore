@@ -18,13 +18,14 @@ use Filament\Forms\Get;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Mpdf\Tag\A;
 
 class SelectColumnField extends Select
 {
     use HasTraduction;
 
 
-    public static function makeFromOptions(string $name, AbstractModelRestore | null $record = null, $parent = null, $label= null): static
+    public static function makeFromOptions(string $name, AbstractModelRestore | null $record = null, $parent = null, $label = null): static
     {
         $static = app(static::class, ['name' => $name]);
         $static->configure()
@@ -39,15 +40,19 @@ class SelectColumnField extends Select
         return $static;
     }
 
-    public static function makeToOptions(string $name, AbstractModelRestore | null $record = null, $parent = null, $label= null): static
+    public static function makeToOptions(string $name, AbstractModelRestore | null $record = null, $parent = null, $label = null): static
     {
         $static = app(static::class, ['name' => $name]);
         $static->configure()
             ->label($static->getTraductionFormLabel($label ?? $name))
             ->placeholder($static->getTraductionFormPlaceholder($label ?? $name))
             ->options(function (Get $get) use ($record, $parent, $static) {
-                if ($record->connectionTo)
+                if ($record->connectionTo) {
+                    if ($parent instanceof AbstractModelRestore) {
+                        return $static->getColumnsOptions($record->connectionTo, $parent->table_to);
+                    }
                     return $static->getColumnsOptions($record->connectionTo, $get($parent));
+                }
                 return [];
             });
 
@@ -55,7 +60,7 @@ class SelectColumnField extends Select
     }
 
 
-    public static function make(string $name, AbstractModelRestore | null $record = null, $label= null): static
+    public static function make(string $name, AbstractModelRestore | null $record = null, $label = null): static
     {
         $static = app(static::class, ['name' => $name]);
         $static->configure()

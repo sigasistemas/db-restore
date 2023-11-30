@@ -191,7 +191,7 @@ class RestoreHelper
 
     public static function getFromColumnsFileOptions($record)
     {
-        return Cache::rememberForever("{$record->file}-header", function () use ($record) {
+        return Cache::rememberForever("{$record->file}-headerd", function () use ($record) {
             $inputFileName = Storage::path($record->file);
 
             $testAgainstFormats = [
@@ -202,6 +202,7 @@ class RestoreHelper
 
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($inputFileName, 0, $testAgainstFormats);
             $headers = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+            
             if (isset($headers[1])) {
                 return $headers[1];
             }
@@ -214,12 +215,20 @@ class RestoreHelper
 
 
         $column_from = data_get($column, 'column_from');
+        $column_to = data_get($column, 'column_to');
         $default_value = data_get($column, 'default_value');
         $type = data_get($column, 'type');
         $relation = data_get($column, 'relation');
 
         if (in_array($column_from, ['slug'])) {
             if (!data_get($chunk, $column_from)) {
+                if ($default_value) {
+                    return Str::of(data_get($chunk, $default_value))->slug()->append('-' . data_get($chunk, 'id'))->__toString();
+                }
+                return Str::of(data_get($chunk, 'name'))->slug()->append('-' . data_get($chunk, 'id'))->__toString();
+            }
+        } else {
+            if (in_array($column_to, ['slug'])) {
                 if ($default_value) {
                     return Str::of(data_get($chunk, $default_value))->slug()->append('-' . data_get($chunk, 'id'))->__toString();
                 }
@@ -448,10 +457,14 @@ class RestoreHelper
                 //Uma opção é seria usar a função getValueType para pegar o valor padrão formatado
                 //Posibilidade para o futuro, assim mesmo sendo um valor padrão, podemos formatar o valor
                 if ($default_value = data_get($column, 'default_value')) {
-                    if (data_get($column, 'type') == 'password') {
-                        $data[$key] =  bcrypt($default_value);
-                    } else {
-                        $data[$key] =  $default_value;
+                    if (in_array(data_get($column, 'column_to'), ['slug'])) {
+                        $data[$key] = Str::of(data_get($row, $default_value))->slug()->append('-' . data_get($row, 'id'))->__toString();
+                    }else{
+                        if (data_get($column, 'type') == 'password') {
+                            $data[$key] =  bcrypt($default_value);
+                        } else {
+                            $data[$key] =  $default_value;
+                        }
                     }
                 } else {
                     if (in_array($key, config('tenant.default_tenant_columns'))) {
@@ -664,6 +677,7 @@ class RestoreHelper
     {
         if (isset($data['slug'])) {
             $slug = data_get($data, 'slug');
+
             if (!$slug) {
                 $data['slug'] = Str::of(data_get($data, 'name'))->__toString();
             } else {
