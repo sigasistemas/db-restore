@@ -23,7 +23,7 @@ return new class extends Migration
             $table->ulid('id', 26)->primary();
             $table->ulid('user_id')->nullable();
             $table->ulid('tenant_id')->nullable();
-            $table->ulid('impoert_id')->nullable();
+            $table->ulid('import_id')->nullable();
             $table->string('name')->nullable()->comment('Nome do modelo');
             $table->string('slug')->nullable()->comment('Nome do modelo');
             $table->json('columns')->nullable()->comment('Colunas da tabela de origem');

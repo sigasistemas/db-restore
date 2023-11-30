@@ -281,8 +281,7 @@ class EditImport extends EditRecord
                     }
                 }),
             Actions\Action::make('sample')
-                ->icon('fas-file-import')
-                ->visible(fn (Import $record) => $record->samples->count() > 0)
+                ->icon('fas-file-import') 
                 ->color('warning')
                 ->label('Gerar um modelo')
                 ->form(function (Import $record) {
