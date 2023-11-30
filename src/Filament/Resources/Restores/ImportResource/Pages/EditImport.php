@@ -280,45 +280,7 @@ class EditImport extends EditRecord
                             ->send();
                     }
                 }),
-            Actions\Action::make('sample')
-                ->icon('fas-file-import')
-                ->color('warning')
-                ->label('Gerar um modelo')
-                ->form(function (Import $record) {
-                    return [
-                        SelectColumnField::make('tenant_id', $record)
-                            ->required()
-                            ->searchable()
-                            ->columnSpanFull()
-                            ->options(Tenant::query()->whereStatus('published')->pluck('name', 'id')->toArray())
-                    ];
-                })
-                ->action(function (Import $record, array $data) {
-
-                    if (class_exists('App\Core\Helpers\TenantHelper')) {
-                        if (method_exists(app('App\Core\Helpers\TenantHelper'), 'generateModel')) {
-                            return app('App\Core\Helpers\TenantHelper')->generateModel($data);
-                        }
-                    }
-
-                    $tenant = Tenant::find($data['tenant_id']);
-
-                    $fields = DB::connection(config('database.default'))->table(config('db-restore.tables.fields', 'fields'))->where('tenant_id', $tenant['id'])->get();
-
-                    if ($fields->count()) {
-                        $fileName = sprintf('%s.%s', $record->slug, $record->extension);
-                        PlanilhaHelper::make($record, $fields)
-                            ->fileName($fileName)
-                            ->sheet()
-                            ->getHeaders()
-                            ->save();
-                        return Storage::disk($record->disk)->download($fileName);
-                    }
-                    Notification::make()
-                        ->title('Não foi possível gerar o modelo!')
-                        ->danger()
-                        ->send();
-                }),
+           
             Actions\Action::make('Restore')
                 ->label('Importar')
                 ->visible(fn (Import $record) => $record->columns->count() > 0)
