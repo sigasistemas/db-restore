@@ -20,6 +20,7 @@ use Callcocam\DbRestore\Forms\Components\SelectTableToField;
 use Callcocam\DbRestore\Forms\Components\TextareaField;
 use Callcocam\DbRestore\Forms\Components\TextInputField;
 use Callcocam\DbRestore\Helpers\FileHelper;
+use Callcocam\DbRestore\Helpers\PlanilhaHelper;
 use Callcocam\DbRestore\Models\Import;
 use Callcocam\DbRestore\Helpers\RestoreHelper;
 use Callcocam\DbRestore\Models\Children;
@@ -32,6 +33,7 @@ use Callcocam\DbRestore\Traits\WithColumns;
 use Callcocam\DbRestore\Traits\WithFormSchemas;
 use Callcocam\DbRestore\Traits\WithSections;
 use Callcocam\DbRestore\Traits\WithTables;
+use Callcocam\Tenant\Models\Tenant;
 use Filament\Actions;
 use Filament\Forms\Form;
 use Filament\Forms;
@@ -176,17 +178,17 @@ class EditImport extends EditRecord
                 ->action(function (Import $record, array $data) {
                     $connection = RestoreHelper::getConnectionCloneOptions(Connection::find($data['connection_id']));
                     $fields  = DB::connection($connection)->table($data['table_to_fields'])->get()->pluck('name', 'id')->toArray();
-                    
+
                     $headers = FileHelper::make($record)
                         ->load()
-                        ->getHeaders(); 
-                       $reverts = array_flip($headers);
-                       $values = [];
-                        foreach ($fields as $key => $header) {
-                            if (isset($reverts[$header])) {
-                               $values[$reverts[$header]] = $key;
-                            }
-                        } 
+                        ->getHeaders();
+                    $reverts = array_flip($headers);
+                    $values = [];
+                    foreach ($fields as $key => $header) {
+                        if (isset($reverts[$header])) {
+                            $values[$reverts[$header]] = $key;
+                        }
+                    }
 
                     if ($childrens = $record->childrens) {
                         foreach ($childrens as $children) {
@@ -283,30 +285,39 @@ class EditImport extends EditRecord
                 ->visible(fn (Import $record) => $record->samples->count() > 0)
                 ->color('warning')
                 ->label('Gerar um modelo')
-                ->form([
-                    SelectColumnField::make('import')
-                        ->options(Sample::query()->pluck('name', 'id')->toArray())
-                        ->searchable()
-                        ->columnSpanFull()
-                        ->required(),
-                    TextareaField::makeText('description')
-                        ->columnSpanFull()
+                ->form(function (Import $record) {
+                    return [
+                        SelectColumnField::make('tenant_id', $record)
+                            ->required()
+                            ->searchable()
+                            ->columnSpanFull()
+                            ->options(Tenant::query()->whereStatus('published')->pluck('name', 'id')->toArray())
+                    ];
+                })
+                ->action(function (Import $record, array $data) {
+                    $tenant = Tenant::find($data['tenant_id']);
 
-                ])
-                ->action(function (array $data) {
-                    $record = Sample::query()->find($data['import']);
-
-                    if ($record) {
-                        FileHelper::make($record)
-                            ->fileName()
-                            ->sheet()
-                            ->columns()
-                            ->writer()
-                            ->save();
-
-
-                        return Storage::disk($record->disk)->download(sprintf('%s.%s', $record->slug, $record->extension));
+                    if (class_exists('App\Core\Helpers\TenantHelper')) {
+                        if (method_exists(app('App\Core\Helpers\TenantHelper'), 'generateModel')) {
+                            return app('App\Core\Helpers\TenantHelper')->generateModel($record);
+                        }
                     }
+
+                    $fields = DB::connection(config('database.default'))->table(config('db-restore.tables.fields', 'fields'))->where('tenant_id', $tenant['id'])->get();
+
+                    if ($fields->count()) {
+                        $fileName = sprintf('%s.%s', $record->slug, $record->extension);
+                        PlanilhaHelper::make($record, $fields)
+                            ->fileName($fileName)
+                            ->sheet()
+                            ->getHeaders()
+                            ->save();
+                        return Storage::disk($record->disk)->download($fileName);
+                    }
+                    Notification::make()
+                        ->title('Não foi possível gerar o modelo!')
+                        ->danger()
+                        ->send();
                 }),
             Actions\Action::make('Restore')
                 ->label('Importar')
@@ -406,7 +417,7 @@ class EditImport extends EditRecord
                                 //Que é a coluna join_to_column do modelo filho(children)
                                 //Pega as colunas da tabela de destino
                                 if ($children && $childremColumns = $children->columns) {
-                                    $to_columns[$children->join_to_column]['column_from'] = $childremColumns->pluck('column_from', 'column_to')->toArray(); 
+                                    $to_columns[$children->join_to_column]['column_from'] = $childremColumns->pluck('column_from', 'column_to')->toArray();
                                 }
                             }
                             //TESTE

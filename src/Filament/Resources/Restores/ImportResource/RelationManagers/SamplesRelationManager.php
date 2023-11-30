@@ -12,8 +12,10 @@ use App\Models\Tenant;
 use Callcocam\DbRestore\Forms\Components\SelectColumnField;
 use Callcocam\DbRestore\Forms\Components\TextareaField;
 use Callcocam\DbRestore\Forms\Components\TextInputField;
+use Callcocam\DbRestore\Helpers\PlanilhaHelper;
 use Callcocam\DbRestore\Models\AbstractModelRestore;
 use Callcocam\DbRestore\Traits\HasTraduction;
+use Callcocam\Tenant\Models\Tenant as ModelsTenant;
 use Filament\Forms;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Form;
@@ -23,6 +25,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class SamplesRelationManager extends RelationManager
 {
@@ -37,7 +40,24 @@ class SamplesRelationManager extends RelationManager
             ->schema([
                 SelectColumnField::make('tenant_id', $ownerRecord)
                     ->required()
+                    ->live()
                     ->searchable()
+                    ->afterStateUpdated(function (string $state) use ($ownerRecord) {
+                        if (class_exists('App\Core\Helpers\TenantHelper')) {
+                            if (method_exists(app('App\Core\Helpers\TenantHelper'), 'generateModel')) {
+                                return app('App\Core\Helpers\TenantHelper')->generateModel($state);
+                            }
+                        }
+
+                        $fields = DB::connection(config('database.default'))->table(config('db-restore.tables.fields', 'fields'))->where('tenant_id', $state)->get();
+
+                        if ($fields) {
+                            PlanilhaHelper::make($ownerRecord, $fields)
+                            ->sheet()
+                            ->getHeaders()
+                            ->save();
+                        }
+                    })
                     ->columnSpanFull()
                     ->options(Tenant::query()->whereStatus('published')->pluck('name', 'id')->toArray()),
                 TextInputField::make('name')
@@ -62,6 +82,7 @@ class SamplesRelationManager extends RelationManager
                     ->label('Colunas')
                     ->statePath('columns')
                     ->schema(function () use ($ownerRecord) {
+                        dd($ownerRecord);
                         return [
                             SelectColumnField::make('column')
                                 ->required()

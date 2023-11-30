@@ -89,7 +89,7 @@ class ImportResource extends Resource
     public static function getRelations(): array
     {
         return [
-            SamplesRelationManager::class
+            // SamplesRelationManager::class
         ];
     }
 
