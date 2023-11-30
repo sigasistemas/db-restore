@@ -115,18 +115,32 @@ class RestoreHelper
     public static function getColumsSchema($columns, $from_table, $column_name)
     {
 
-        return collect($columns)->mapWithKeys(function ($column) use ($from_table, $column_name) {
-            return [$column[$column_name] => [
-                'columns' => sprintf('%s.%s', $from_table, $column[$column_name]),
-                'relation_id' => $column['relation_id'],
-                'relation' => $column['relation'],
-                'restore_id' => $column['restore_id'],
-                'column_from' => $column['column_from'],
-                'column_to' => $column['column_to'],
-                'default_value' => $column['default_value'],
-                'type' => $column['type'],
-            ]];
-        })->toArray();
+        $data = [];
+        foreach ($columns as $column) {
+            $name = $column[$column_name];
+            if (isset($data[$name])) { 
+                if (is_array(data_get($data,  sprintf("%s.column_from", $name)))) { 
+                    $names = data_get($data, sprintf("%s.column_from", $name));
+                    $names[$column['column_from']] = $column['column_from'];
+                } else {
+                    $names[data_get($data, sprintf("%s.column_from", $name))] = data_get($data, sprintf("%s.column_from", $name));
+                    $names[$column['column_from']] = $column['column_from'];
+                }
+                data_set($data, sprintf("%s.column_from", $name), $names);
+            } else {
+                $data[$name] = [
+                    'columns' => sprintf('%s.%s', $from_table, $column[$column_name]),
+                    'relation_id' => $column['relation_id'],
+                    'relation' => $column['relation'],
+                    'restore_id' => $column['restore_id'],
+                    'column_from' => $column['column_from'],
+                    'column_to' => $column['column_to'],
+                    'default_value' => $column['default_value'],
+                    'type' => $column['type'],
+                ];
+            }
+        } 
+         return $data;
     }
 
     public static function getFromDatabaseRows(AbstractModelRestore $restore, $from_table, $filters = null, $orderings = null, $tableTo = null)
@@ -202,7 +216,7 @@ class RestoreHelper
 
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($inputFileName, 0, $testAgainstFormats);
             $headers = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
-            
+
             if (isset($headers[1])) {
                 return $headers[1];
             }
@@ -459,7 +473,7 @@ class RestoreHelper
                 if ($default_value = data_get($column, 'default_value')) {
                     if (in_array(data_get($column, 'column_to'), ['slug'])) {
                         $data[$key] = Str::of(data_get($row, $default_value))->slug()->append('-' . data_get($row, 'id'))->__toString();
-                    }else{
+                    } else {
                         if (data_get($column, 'type') == 'password') {
                             $data[$key] =  bcrypt($default_value);
                         } else {
@@ -753,7 +767,7 @@ class RestoreHelper
                 break;
             case 'array':
                 if (is_array($column_from)) {
-                    $data = [];
+                    $data = []; 
                     foreach ($column_from as $key => $value) {
                         $data[$key] = data_get($chunk, $value, $default_value);
                     }

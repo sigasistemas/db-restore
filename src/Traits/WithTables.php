@@ -22,7 +22,7 @@ trait WithTables
             return $this->getTables($connection, $prefix);
         } elseif (is_string($connection)) {
             $connection =  Cache::rememberForever($connection, function () use ($connection) {
-                return Connection::find($connection);
+                return ;
             });
             if ($connection) {
                 return $this->getTables($connection, $prefix);

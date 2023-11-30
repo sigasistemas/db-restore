@@ -351,6 +351,10 @@ return [
                 'label' => 'Importados',
                 'placeholder' => 'Selecione',
             ],
+            'table_to_fields' => [
+                'label' => 'Tabela de campos',
+                'placeholder' => 'Selecione',
+            ],
 
         ],
     ],

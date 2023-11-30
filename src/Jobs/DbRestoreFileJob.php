@@ -45,7 +45,7 @@ class DbRestoreFileJob implements ShouldQueue
             rows: $this->chunks,
             to_columns: $this->to_columns,
             connectionTo: $connectionTo
-        ); 
+        );  
         $model->insert($values);
     }
 }

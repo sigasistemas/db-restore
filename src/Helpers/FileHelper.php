@@ -8,6 +8,8 @@
 
 namespace Callcocam\DbRestore\Helpers;
 
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class FileHelper
@@ -22,6 +24,8 @@ class FileHelper
     protected $sheet;
 
     protected $fileName;
+
+    protected $headers;
 
     public function __construct($record)
     {
@@ -43,6 +47,21 @@ class FileHelper
 
 
         return $static;
+    }
+
+
+    public function file()
+    {
+        return $this->file;
+    }
+
+    public function getHeaders()
+    {
+        $headers = $this->headers; 
+        if (isset($headers[1])) {
+            return $headers[1];
+        }
+        return  $this->headers;
     }
 
     public function fileName()
@@ -81,6 +100,26 @@ class FileHelper
                 $this->sheet->setCellValue(sprintf('%s%s', $column->column_from, $key), data_get($row, $column->column_to));
             }
         }
+
+        return $this;
+    }
+
+    public function load()
+    {
+
+        $this->headers = Cache::rememberForever("{$this->record->file}-header", function () {
+
+            $inputFileName = Storage::path($this->record->file);
+            $testAgainstFormats = [
+                \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLS,
+                \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLSX,
+                \PhpOffice\PhpSpreadsheet\IOFactory::READER_CSV,
+            ];
+
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($inputFileName, 0, $testAgainstFormats);
+            return $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+        });
+
 
         return $this;
     }
