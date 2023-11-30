@@ -281,7 +281,7 @@ class EditImport extends EditRecord
                     }
                 }),
             Actions\Action::make('sample')
-                ->icon('fas-file-import') 
+                ->icon('fas-file-import')
                 ->color('warning')
                 ->label('Gerar um modelo')
                 ->form(function (Import $record) {
@@ -294,13 +294,14 @@ class EditImport extends EditRecord
                     ];
                 })
                 ->action(function (Import $record, array $data) {
-                    $tenant = Tenant::find($data['tenant_id']);
 
                     if (class_exists('App\Core\Helpers\TenantHelper')) {
                         if (method_exists(app('App\Core\Helpers\TenantHelper'), 'generateModel')) {
-                            return app('App\Core\Helpers\TenantHelper')->generateModel($record);
+                            return app('App\Core\Helpers\TenantHelper')->generateModel($data);
                         }
                     }
+
+                    $tenant = Tenant::find($data['tenant_id']);
 
                     $fields = DB::connection(config('database.default'))->table(config('db-restore.tables.fields', 'fields'))->where('tenant_id', $tenant['id'])->get();
 
