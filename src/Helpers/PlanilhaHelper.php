@@ -38,7 +38,7 @@ class PlanilhaHelper
         $static->file->getProperties()
             ->setCreator('Callcocam')
             ->setLastModifiedBy('Callcocam')
-            ->setTitle(sprintf("Importação de dados %s", $record->name));
+            ->setTitle(sprintf("Importação de dados %s", data_get($record, 'name')));
 
         return $static;
     }
@@ -66,7 +66,7 @@ class PlanilhaHelper
 
         foreach ($this->fields as $key => $column) {
             $char = $alfabetoExcel[$key];
-            $this->sheet->setCellValue(sprintf('%s1', $char), $column->name);
+            $this->sheet->setCellValue(sprintf('%s1', $char), data_get($column, 'name'));
         }
 
         return $this;
