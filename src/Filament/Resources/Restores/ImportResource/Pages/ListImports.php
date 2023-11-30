@@ -32,7 +32,7 @@ class ListImports extends ListRecords
             Actions\CreateAction::make(),
             Actions\Action::make('sample')
                 ->icon('fas-file-import')
-                ->color('warning')
+                ->color('info')
                 ->label('Gerar um modelo')
                 ->form(function () {
                     return [
