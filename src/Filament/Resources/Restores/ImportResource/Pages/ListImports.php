@@ -8,27 +8,17 @@
 
 namespace Callcocam\DbRestore\Filament\Resources\Restores\ImportResource\Pages;
 
-use Callcocam\DbRestore\Filament\Resources\Restores\ImportResource;
-use Callcocam\DbRestore\Forms\Components\ConnectionField;
-use Callcocam\DbRestore\Forms\Components\ConnectionToField;
-use Callcocam\DbRestore\Forms\Components\SelectColumnField;
-use Callcocam\DbRestore\Forms\Components\SelectColumnToField;
-use Callcocam\DbRestore\Forms\Components\SelectTableField;
-use Callcocam\DbRestore\Forms\Components\SelectTableFromField;
-use Callcocam\DbRestore\Forms\Components\TextInputField;
-use Callcocam\DbRestore\Helpers\RestoreHelper;
-use Callcocam\DbRestore\Models\Connection;
-use Callcocam\DbRestore\Models\Import;
-use Callcocam\DbRestore\Models\Sample;
+use Callcocam\DbRestore\Filament\Resources\Restores\ImportResource; 
+use Callcocam\DbRestore\Forms\Components\SelectTableField; 
+use Callcocam\DbRestore\Helpers\PlanilhaHelper; 
 use Callcocam\DbRestore\Traits\WithTables;
+use Callcocam\Tenant\Models\Tenant;
 use Filament\Actions;
-use Filament\Forms\Components\Group;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Get;
+use Filament\Forms\Components\Group; 
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
-use Illuminate\Support\Facades\Storage;
-use Mpdf\Tag\Samp;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage; 
 
 class ListImports extends ListRecords
 {
@@ -40,6 +30,59 @@ class ListImports extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+            Actions\Action::make('sample')
+                ->icon('fas-file-import')
+                ->color('warning')
+                ->label('Gerar um modelo')
+                ->form(function () {
+                    return [
+                        Group::make([
+                            SelectTableField::make('tenant_id')
+                                ->required()
+                                ->searchable()
+                                ->columnSpan([
+                                    'md' => 2
+                                ])
+                                ->options(Tenant::query()->whereStatus('published')->pluck('name', 'id')->toArray()),
+                            SelectTableField::make('extension')
+                                ->options(function () {
+                                    $options = config('restore.extension', ['csv', 'xls', 'xlsx']);
+                                    $extensions = $options;
+                                    return array_combine($extensions, $extensions);
+                                })
+                                ->default('xlsx')
+                                ->columnSpan([
+                                    'md' => 1
+                                ])->required(),
+                        ])->columns(3)
+                    ];
+                })
+                ->action(function (array $data) {
+
+                    if (class_exists('App\Core\Helpers\TenantHelper')) {
+                        if (method_exists(app('App\Core\Helpers\TenantHelper'), 'generateModel')) {
+                            return app('App\Core\Helpers\TenantHelper')->generateModel($data);
+                        }
+                    }
+
+                    $tenant = Tenant::find($data['tenant_id']);
+
+                    $fields = DB::connection(config('database.default'))->table(config('db-restore.tables.fields', 'fields'))->where('tenant_id', $tenant['id'])->get();
+
+                    if ($fields->count()) {
+                        $fileName = sprintf('%s.%s', $tenant->slug, data_get($data, 'extension'));
+                        PlanilhaHelper::make($tenant, $fields)
+                            ->fileName($fileName)
+                            ->sheet()
+                            ->getHeaders()
+                            ->save();
+                        return Storage::disk(data_get($data, 'disk'))->download($fileName);
+                    }
+                    Notification::make()
+                        ->title('Não foi possível gerar o modelo!')
+                        ->danger()
+                        ->send();
+                }),
         ];
     }
 }
