@@ -8,17 +8,18 @@
 
 namespace Callcocam\DbRestore\Filament\Resources\Restores\ImportResource\Pages;
 
-use Callcocam\DbRestore\Filament\Resources\Restores\ImportResource; 
-use Callcocam\DbRestore\Forms\Components\SelectTableField; 
-use Callcocam\DbRestore\Helpers\PlanilhaHelper; 
+use Callcocam\DbRestore\Filament\Resources\Restores\ImportResource;
+use Callcocam\DbRestore\Forms\Components\SelectTableField;
+use Callcocam\DbRestore\Helpers\PlanilhaHelper;
 use Callcocam\DbRestore\Traits\WithTables;
 use Callcocam\Tenant\Models\Tenant;
 use Filament\Actions;
-use Filament\Forms\Components\Group; 
+use Filament\Forms\Components\Group;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage; 
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ListImports extends ListRecords
 {
@@ -46,7 +47,7 @@ class ListImports extends ListRecords
                                 ->options(Tenant::query()->whereStatus('published')->pluck('name', 'id')->toArray()),
                             SelectTableField::make('extension')
                                 ->options(function () {
-                                    $options = config('restore.extension', ['csv', 'xls', 'xlsx']);
+                                    $options = config('restore.options.extension', ['csv', 'xls', 'xlsx']);
                                     $extensions = $options;
                                     return array_combine($extensions, $extensions);
                                 })
@@ -54,7 +55,25 @@ class ListImports extends ListRecords
                                 ->columnSpan([
                                     'md' => 1
                                 ])->required(),
-                        ])->columns(3)
+                            SelectTableField::make('disk')
+                                ->options(function () {
+                                    $options = config('restore.options.disk', ['public', 'local', 's3', 'dropbox', 'do']);
+                                    return array_combine($options, $options);
+                                })
+                                ->default('public')
+                                ->columnSpan([
+                                    'md' => 1
+                                ])->required(),
+                            SelectTableField::make('option')
+                                ->options(function () {
+                                    $options = config('restore.dataOptios', ['cabeçalho', 'dados', 'cabecalho_dados']);
+                                    return array_combine($options, $options);
+                                })
+                                ->default('cabeçalho')
+                                ->columnSpan([
+                                    'md' => 1
+                                ])->required(),
+                        ])->columns(5)
                     ];
                 })
                 ->action(function (array $data) {
@@ -69,14 +88,21 @@ class ListImports extends ListRecords
 
                     $fields = DB::connection(config('database.default'))->table(config('db-restore.tables.fields', 'fields'))->where('tenant_id', $tenant['id'])->get();
 
+                    if(!$tenant->slug){
+                        $tenant->slug = Str::slug($tenant->name);
+                        $tenant->save();
+                    }
+
                     if ($fields->count()) {
                         $fileName = sprintf('%s.%s', $tenant->slug, data_get($data, 'extension'));
                         PlanilhaHelper::make($tenant, $fields)
                             ->fileName($fileName)
                             ->sheet()
                             ->getHeaders()
+                            ->getBody(in_array(data_get($data, 'option'), ['dados', 'cabecalho_dados']))
                             ->save();
-                        return Storage::disk(data_get($data, 'disk'))->download($fileName);
+                        Notification::make()->title('Modelo gerado com sucesso!')->success()->send();
+                        return Storage::disk(data_get($data, 'disk', 'public'))->download($fileName);
                     }
                     Notification::make()
                         ->title('Não foi possível gerar o modelo!')

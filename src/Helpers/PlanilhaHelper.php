@@ -8,7 +8,6 @@
 
 namespace Callcocam\DbRestore\Helpers;
 
-use Illuminate\Support\Facades\Storage;
 
 class PlanilhaHelper
 {
@@ -86,10 +85,10 @@ class PlanilhaHelper
             if (method_exists(app('App\Core\Helpers\TenantHelper'), 'getFakeData')) {
                 return app('App\Core\Helpers\TenantHelper')->getFakeData($alfabetoExcel, $this->fields, $data);
             } else {
-                return $this->getFakeData($alfabetoExcel, $this->fields, $data);
+                $data = $this->getFakeData($alfabetoExcel, $this->fields, $data);
             }
         } else {
-            return $this->getFakeData($alfabetoExcel, $this->fields, $data);
+            $data = $this->getFakeData($alfabetoExcel, $this->fields, $data);
         }
         //Seta os dados
         unset($data[0]);
@@ -98,6 +97,7 @@ class PlanilhaHelper
                 $this->sheet->setCellValue($key, $value);
             }
         }
+        return $this;
     }
 
     public function save()
@@ -113,9 +113,16 @@ class PlanilhaHelper
         ];
         $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($this->file,  data_get($extensions, 'xlsx', 'xlsx'));
 
+
         $file_name =  $this->fileName;
 
-        $writer->save(storage_path(sprintf('app/public/%s', $file_name))); 
+        if (class_exists('App\Core\Helpers\TenantHelper')) {
+            if (method_exists(app('App\Core\Helpers\TenantHelper'), 'saveFile')) {
+                app('App\Core\Helpers\TenantHelper')->saveFile($writer,  $file_name);
+                return $this;
+            }
+        }
+        $writer->save(storage_path(sprintf('app/public/%s', $file_name)));
 
         return $this;
     }
@@ -150,8 +157,6 @@ class PlanilhaHelper
                     $item[$chave] = fake()->randomNumber();
                 } elseif ($type == 'email') {
                     $item[$chave] = fake()->email();
-                } elseif ($type == 'password') {
-                    $item[$chave] = fake()->password();
                 } elseif ($type == 'date') {
                     $item[$chave] = fake()->dateTime()->format('Y-m-d');
                 } elseif ($type == 'time') {
@@ -159,15 +164,15 @@ class PlanilhaHelper
                 } elseif ($type == 'datetime-local') {
                     $item[$chave] = fake()->dateTime()->format('Y-m-d H:i:s');
                 } elseif ($type == 'color') {
-                    $item[$chave] = sprintf("Color %s", fake()->sentence());
+                    $item[$chave] = sprintf("Color %s", fake()->word);
                 } elseif ($type == 'file') {
                     $item[$chave] = sprintf("/import/%s.png",  rand(1, 10));
                 } elseif ($type == 'select') {
-                    $item[$chave] = sprintf("Select %s", fake()->sentence());
+                    $item[$chave] = sprintf("Select %s", fake()->word);
                 } elseif ($type == 'radio') {
-                    $item[$chave] = sprintf("Radio %s", fake()->word);
+                    $item[$chave] = sprintf("Radio %s", fake()->randomNumber);
                 } elseif ($type == 'checkbox') {
-                    $item[$chave] = sprintf("Checkbox %s", fake()->word);
+                    $item[$chave] = sprintf("Checkbox %s", fake()->randomNumber);
                 } elseif ($type == 'textarea') {
                     $item[$chave] = fake()->sentence();
                 } elseif ($type == 'hidden') {

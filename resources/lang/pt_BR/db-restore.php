@@ -355,6 +355,10 @@ return [
                 'label' => 'Tabela de campos',
                 'placeholder' => 'Selecione',
             ],
+            'option' => [
+                'label' => 'Opção',
+                'placeholder' => 'Selecione',
+            ],
 
         ],
     ],
