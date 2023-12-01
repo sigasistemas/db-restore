@@ -114,8 +114,9 @@ class PlanilhaHelper
         $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($this->file,  data_get($extensions, 'xlsx', 'xlsx'));
 
         $file_name =  $this->fileName;
-
-        $writer->save(storage_path(sprintf('app/public/%s', $file_name))); 
+        ob_end_clean();
+        $writer->save('php://output');
+        // $writer->save(storage_path(sprintf('app/public/%s', $file_name))); 
 
         return $this;
     }
