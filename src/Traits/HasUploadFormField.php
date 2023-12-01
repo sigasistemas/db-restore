@@ -5,8 +5,9 @@
  * User: callcocam@gmail.com, contato@sigasmart.com.br
  * https://www.sigasmart.com.br
  */
+
 namespace Callcocam\DbRestore\Traits;
- 
+
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
@@ -35,6 +36,7 @@ trait HasUploadFormField
     {
 
         return FileUpload::make($name)
+            ->disk(config('db-restore.disk', 'public'))
             ->label('Arquivo')
             ->columnSpanFull();
     }
@@ -60,7 +62,7 @@ trait HasUploadFormField
                         $name = sprintf("%s/%s.%s", get_tenant_id(), $name, $ext);
                         $result =  static::downloadFileFromUrl($state, $name);
                         if ($result) {
-                            $set($file,$result);
+                            $set($file, $result);
                         }
                     })
             )
@@ -89,7 +91,7 @@ trait HasUploadFormField
                         $result =  static::downloadFileFromUrl($state, $name);
                         if ($result) {
                             dd($result);
-                            $set($file,$result);
+                            $set($file, $result);
                         }
                     })
             )
