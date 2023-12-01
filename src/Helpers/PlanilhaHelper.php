@@ -71,8 +71,8 @@ class PlanilhaHelper
         return $this;
     }
 
-    public function getBody($generate = false)
-    {
+    public function getBody($generate = 0)
+    { 
         if (!$generate) {
             return $this;
         }
@@ -83,12 +83,12 @@ class PlanilhaHelper
         $data = [];
         if (class_exists('App\Core\Helpers\TenantHelper')) {
             if (method_exists(app('App\Core\Helpers\TenantHelper'), 'getFakeData')) {
-                return app('App\Core\Helpers\TenantHelper')->getFakeData($alfabetoExcel, $this->fields, $data);
+                return app('App\Core\Helpers\TenantHelper')->getFakeData($alfabetoExcel, $this->fields, $data, $generate);
             } else {
-                $data = $this->getFakeData($alfabetoExcel, $this->fields, $data);
+                $data = $this->getFakeData($alfabetoExcel, $this->fields, $data, $generate);
             }
         } else {
-            $data = $this->getFakeData($alfabetoExcel, $this->fields, $data);
+            $data = $this->getFakeData($alfabetoExcel, $this->fields, $data, $generate);
         }
         //Seta os dados
         unset($data[0]);
@@ -142,10 +142,10 @@ class PlanilhaHelper
         return $alfabetoExcel;
     }
 
-    protected function getFakeData($alfabetoExcel, $fields,  $data)
+    protected function getFakeData($alfabetoExcel, $fields,  $data, $generate = 0)
     {
 
-        for ($i = 1; $i < 20; $i++) {
+        for ($i = 1; $i < $generate; $i++) {
             $item = [];
             foreach ($fields as $key => $field) {
                 $char = $alfabetoExcel[$key];

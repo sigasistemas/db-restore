@@ -10,6 +10,7 @@ namespace Callcocam\DbRestore\Filament\Resources\Restores\ImportResource\Pages;
 
 use Callcocam\DbRestore\Filament\Resources\Restores\ImportResource;
 use Callcocam\DbRestore\Forms\Components\SelectTableField;
+use Callcocam\DbRestore\Forms\Components\TextInputField;
 use Callcocam\DbRestore\Helpers\PlanilhaHelper;
 use Callcocam\DbRestore\Traits\WithTables;
 use Callcocam\Tenant\Models\Tenant;
@@ -64,12 +65,9 @@ class ListImports extends ListRecords
                                 ->columnSpan([
                                     'md' => 1
                                 ])->required(),
-                            SelectTableField::make('option')
-                                ->options(function () {
-                                    $options = config('restore.dataOptios', ['cabeçalho', 'dados', 'cabecalho_dados']);
-                                    return array_combine($options, $options);
-                                })
-                                ->default('cabeçalho')
+                            TextInputField::make('option')
+                                ->numeric()
+                                ->default('0')
                                 ->columnSpan([
                                     'md' => 1
                                 ])->required(),
@@ -88,7 +86,7 @@ class ListImports extends ListRecords
 
                     $fields = DB::connection(config('database.default'))->table(config('db-restore.tables.fields', 'fields'))->where('tenant_id', $tenant['id'])->get();
 
-                    if(!$tenant->slug){
+                    if (!$tenant->slug) {
                         $tenant->slug = Str::slug($tenant->name);
                         $tenant->save();
                     }
@@ -99,7 +97,7 @@ class ListImports extends ListRecords
                             ->fileName($fileName)
                             ->sheet()
                             ->getHeaders()
-                            ->getBody(in_array(data_get($data, 'option'), ['dados', 'cabecalho_dados']))
+                            ->getBody(data_get($data, 'option'))
                             ->save();
                         Notification::make()->title('Modelo gerado com sucesso!')->success()->send();
                         return Storage::disk(data_get($data, 'disk', 'public'))->download($fileName);
