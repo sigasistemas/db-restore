@@ -77,11 +77,20 @@ class PlanilhaHelper
         if (!$generate) {
             return $this;
         }
+
         //Pega o alfabeto do excel
         $alfabetoExcel = $this->getColumnsPlanilha();
         //Gera os dados fakes
         $data = [];
-        $data = $this->getFakeData($alfabetoExcel, $this->fields, $data);
+        if (class_exists('App\Core\Helpers\TenantHelper')) {
+            if (method_exists(app('App\Core\Helpers\TenantHelper'), 'getFakeData')) {
+                return app('App\Core\Helpers\TenantHelper')->getFakeData($alfabetoExcel, $this->fields, $data);
+            } else {
+                return $this->getFakeData($alfabetoExcel, $this->fields, $data);
+            }
+        } else {
+            return $this->getFakeData($alfabetoExcel, $this->fields, $data);
+        }
         //Seta os dados
         unset($data[0]);
         foreach ($data as  $item) {
