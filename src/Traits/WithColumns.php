@@ -17,8 +17,6 @@ use Illuminate\Support\Str;
 trait WithColumns
 {
      
-
-
     public function getColumnOptions($record,$connectionFrom = null, $connectionTo=null)
     {
         if(!$connectionFrom){
