@@ -115,9 +115,9 @@ class PlanilhaHelper
 
         $file_name =  $this->fileName;
 
-        $writer->save(storage_path(sprintf('app/public/%s', $file_name)));
+        $writer->save(storage_path(sprintf('app/public/%s', $file_name))); 
 
-        return Storage::disk($this->record->disk)->download($file_name);
+        return $this;
     }
 
     protected function getColumnsPlanilha()
