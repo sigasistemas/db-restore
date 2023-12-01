@@ -62,7 +62,7 @@ class EditExport extends EditRecord
                         ->rows($values)
                         ->save(); 
 
-                    return Storage::disk($record->disk)->download(sprintf('%s.%s', $record->slug, $record->extension));
+                    return Storage::disk(config('db-restore.disk'))->download(sprintf('%s.%s', $record->slug, $record->extension));
                 }),
             Actions\DeleteAction::make(),
             Actions\ForceDeleteAction::make(),

@@ -59,12 +59,12 @@ trait WithActions
                     $from_table = $record->table_to;
 
                     //Verifica se existe o arquivo
-                    if (Storage::exists($record->file)) {
+                    if (Storage::disk(config('db-restore.disk'))->exists($record->file)) {
                         //Pega as colunas da tabela de destino
                         $to_columns = RestoreHelper::getColumsSchema($columns, $from_table, 'column_to');
                         //Pega os dados do arquivo e armazena em cache para não ter que ficar lendo o arquivo toda vez
                         $sheetData = Cache::rememberForever("{$record->file}-column", function () use ($record) {
-                            $inputFileName = Storage::path($record->file);
+                            $inputFileName = Storage::disk(config('db-restore.disk'))->path($record->file);
                             $testAgainstFormats = [
                                 \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLS,
                                 \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLSX,

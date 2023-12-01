@@ -206,7 +206,7 @@ class RestoreHelper
     public static function getFromColumnsFileOptions($record)
     {
         return Cache::rememberForever("{$record->file}-headerd", function () use ($record) {
-            $inputFileName = Storage::path($record->file);
+            $inputFileName = Storage::disk(config('db-restore.disk'))->path($record->file);
 
             $testAgainstFormats = [
                 \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLS,

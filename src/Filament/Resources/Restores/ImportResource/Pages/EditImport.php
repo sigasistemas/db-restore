@@ -170,74 +170,7 @@ class EditImport extends EditRecord
                 })
                     ->description($this->getTraduction('column_imports', 'restore', 'form',  'label'))
                     ->visible(fn (Import $record) => $record->table_to && $record->file),
-
-                // Forms\Components\Section::make($this->getTraduction('childrens', 'restore', 'form',  'label'))
-                //     ->description($this->getTraduction('childrens_imports', 'restore', 'form',  'description'))
-                //     ->visible(fn (Import $record) => $record->table_to && $record->file)
-                //     ->collapsed()
-                //     ->schema(function (Import $record) {
-                //         return  [
-                //             Forms\Components\Repeater::make('childrens')
-                //                 ->relationship('childrens')
-                //                 ->hiddenLabel()
-                //                 ->maxItems(1)
-                //                 ->schema(function () use ($record) {
-                //                     return [
-                //                         TextInputField::make('name')
-                //                             ->columnSpan([
-                //                                 'md' => 2
-                //                             ])->required(),
-                //                         SelectTableFromField::makeTable('table_from', $record, 'table_from_import')
-                //                             ->columnSpan([
-                //                                 'md' => 2
-                //                             ]),
-                //                         SelectTableField::make('join_from_column')
-                //                             ->options(function (Get $get) use ($record) {
-                //                                 $table = $get('table_from');
-                //                                 if ($connectionTo =  $record->connectionTo) {
-                //                                     return $this->getColumns($connectionTo, $table, 'to');
-                //                                 }
-                //                                 return [];
-                //                             })
-                //                             ->columnSpan([
-                //                                 'md' => 3
-                //                             ])->required(function (Get $get) {
-                //                                 return $get('table_from');
-                //                             }),
-                //                         SelectColumnToField::makeColumn('join_to_column', $record)
-                //                             ->columnSpan([
-                //                                 'md' => 3
-                //                             ]),
-                //                         SelectTableToField::makeTable('table_to', $record, 'table_to_import_fields')
-                //                             ->columnSpan([
-                //                                 'md' => 2
-                //                             ]),
-                //                         Section::make()
-                //                             ->visible(fn (Children $children) => $children->exists)
-                //                             ->schema(function (Children  $children) use ($record) {
-                //                                 if (!$children->exists) {
-                //                                     return [];
-                //                                 }
-                //                                 $clone = clone $children;
-                //                                 $clone->file = $record->file;
-                //                                 $clone->tenant_id  = $record->tenant_id;
-                //                                 $clone->tenant  = $record->tenant;
-                //                                 $clone->connectionTo = $record->connectionTo;
-                //                                 return [
-                //                                     $this->getSectionColumnsSchema($clone, function ($record) {
-                //                                         return $this->getColumnsSchemaFileChildrensForm($record);
-                //                                     })->visible(fn (Children $record) => $record->table_to)
-                //                                 ];
-                //                             }),
-
-                //                     ];
-                //                 })
-                //                 ->columns(12)
-                //                 ->columnSpanFull()
-                //         ];
-                //     }),
-
-
+ 
                 $this->getSectionFiltersSchema(record: $record)->visible(fn (Import $record) => $record->table_to && $record->file),
 
                 $this->getSectionOrderingsSchema($record)->visible(fn (Import $record) => $record->table_to && $record->file),
@@ -259,7 +192,7 @@ class EditImport extends EditRecord
         if (!$record->file) {
             return $columns;
         }
-        if (Storage::exists($record->file)) {
+        if (Storage::disk(config('db-restore.disk'))->exists($record->file)) {
 
 
             $headers = RestoreHelper::getFromColumnsFileOptions($record);

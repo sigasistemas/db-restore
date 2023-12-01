@@ -109,7 +109,7 @@ class FileHelper
 
         $this->headers = Cache::rememberForever("{$this->record->file}-header", function () {
 
-            $inputFileName = Storage::path($this->record->file);
+            $inputFileName = Storage::disk(config('db-restore.disk'))->path($this->record->file);
             $testAgainstFormats = [
                 \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLS,
                 \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLSX,

@@ -79,11 +79,11 @@ trait WithFormSchemas
         if (empty($record->file)) {
             return [];
         }
-        if (Storage::exists($record->file)) {
+        if (Storage::disk(config('db-restore.disk'))->exists($record->file)) {
 
 
             $headers = Cache::rememberForever("{$record->file}-header", function () use ($record) {
-                $inputFileName = Storage::path($record->file);
+                $inputFileName = Storage::disk(config('db-restore.disk'))->path($record->file);
 
                 $testAgainstFormats = [
                     \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLS,
