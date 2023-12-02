@@ -11,6 +11,7 @@ namespace Callcocam\DbRestore\Filament\Resources\Restores\ExportResource\Pages;
 use  Callcocam\DbRestore\Filament\Resources\Restores\ExportResource;
 use Callcocam\DbRestore\Forms\Components\ConnectionToField;
 use Callcocam\DbRestore\Forms\Components\SelectColumnField;
+use Callcocam\DbRestore\Forms\Components\SelectField;
 use Callcocam\DbRestore\Forms\Components\SelectTableField;
 use Callcocam\DbRestore\Forms\Components\SelectTableToField;
 use Callcocam\DbRestore\Forms\Components\TextareaField;
@@ -29,8 +30,6 @@ use Filament\Actions;
 use Filament\Forms\Form;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Storage;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use Illuminate\Support\Str;
 
 class EditExport extends EditRecord
 {
@@ -47,7 +46,7 @@ class EditExport extends EditRecord
                 ->label($this->getTraduction('export', 'export', 'action',  'label'))
                 ->action(function (Export $record) {
 
-                    $columns = $record->columns; 
+                    $columns = $record->columns;
 
                     $rows = RestoreHelper::getFromDatabaseRows($record, $record->table_from);
 
@@ -60,7 +59,7 @@ class EditExport extends EditRecord
                         ->columns('column_from', 'column_to')
                         ->writer()
                         ->rows($values)
-                        ->save(); 
+                        ->save();
 
                     return Storage::disk(config('db-restore.disk'))->download(sprintf('%s.%s', $record->slug, $record->extension));
                 }),
@@ -91,7 +90,7 @@ class EditExport extends EditRecord
                         'md' => 3
                     ]),
 
-                SelectTableField::make('tenant_id')
+                SelectField::make('tenant_id')
                     ->relationship('tenant', 'name')
                     ->columnSpan([
                         'md' => 3
@@ -103,7 +102,7 @@ class EditExport extends EditRecord
                     ->columnSpan([
                         'md' => 6
                     ])->required(),
-                SelectColumnField::make('disk')
+                SelectField::make('disk')
                     ->options(function () {
                         $options = config('filesystems.disks', []);
                         $disks = array_keys($options);
@@ -112,7 +111,7 @@ class EditExport extends EditRecord
                     ->columnSpan([
                         'md' => 2
                     ])->required(),
-                SelectColumnField::make('extension')
+                SelectField::make('extension')
                     ->options(function () {
                         $options = config('restore.extension', ['csv', 'xls', 'xlsx', 'pdf']);
                         $extensions = $options;
@@ -121,7 +120,7 @@ class EditExport extends EditRecord
                     ->columnSpan([
                         'md' => 2
                     ])->required(),
-                SelectColumnField::make('delimiter')
+                SelectField::make('delimiter')
                     ->options(function () {
                         $options = config('restore.delimiter', [';', '|', ',']);
                         $delimiters = $options;

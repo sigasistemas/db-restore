@@ -11,20 +11,25 @@ namespace Callcocam\DbRestore\Traits;
 use Callcocam\DbRestore\Forms\Components\SelectColumnField;
 use Callcocam\DbRestore\Forms\Components\SelectColumnFromField;
 use Callcocam\DbRestore\Forms\Components\SelectColumnToField;
+use Callcocam\DbRestore\Forms\Components\SelectField;
 use Callcocam\DbRestore\Forms\Components\SelectTableField;
 use Callcocam\DbRestore\Forms\Components\SelectTableFromField;
 use Callcocam\DbRestore\Forms\Components\SelectTableToField;
 use Callcocam\DbRestore\Forms\Components\TextareaField;
 use Callcocam\DbRestore\Forms\Components\TextInputField;
+use Callcocam\DbRestore\Helpers\DataBaseHelper;
 use Callcocam\DbRestore\Helpers\RestoreHelper;
 use Callcocam\DbRestore\Models\Column;
 use Callcocam\DbRestore\Models\Connection;
+use Callcocam\DbRestore\Models\Defalt;
 use Filament\Forms;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Set;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Filament\Forms\Components\Actions\Action;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Get;
 use Illuminate\Support\Facades\DB;
@@ -99,7 +104,7 @@ trait WithFormSchemas
                 return [];
             });
             $headers = array_filter($headers);
-            $columns[] =  SelectColumnField::make('column_from')
+            $columns[] =  SelectField::make('column_from')
                 ->options(function () use ($headers) {
                     return $headers;
                 })
@@ -108,7 +113,8 @@ trait WithFormSchemas
                 ]);
         }
 
-        $columns[] = SelectColumnToField::makeColumn('column_to', $record)
+        $columns[] = SelectField::make('column_to')
+            ->options(DataBaseHelper::getColumns($record->connTo, $record->table_to))
             ->required()
             ->columnSpan([
                 'md' => '2',
@@ -121,24 +127,12 @@ trait WithFormSchemas
     protected function getColumnsSchemaFileExportForm($record,  $relation = 'relation')
     {
         $columns = [];
-        $columns[] =    SelectColumnField::make('column_from')
+        $columns[] =    SelectField::make('column_from')
             ->required()
             ->searchable()
-            ->options(function () use ($record) {
-                $columns = Cache::rememberForever("colunas-header", function () {
-                    $alfabetoExcel = [];
-                    for ($i = 65; $i <= 90; $i++) {
-                        $alfabetoExcel[] = chr($i);
-                    }
-                    for ($i = 65; $i <= 90; $i++) {
-                        for ($j = 65; $j <= 90; $j++) {
-                            $alfabetoExcel[] = chr($i) . chr($j);
-                        }
-                    }
-                    return  array_combine($alfabetoExcel, $alfabetoExcel);
-                });
-
-                return $columns;
+            ->options(function () {
+                $alfabetoExcel = config('db-restore.alfabetoExcel.headers');
+                return  array_combine($alfabetoExcel, $alfabetoExcel);
             })
             ->columnSpan([
                 'md' => '2',
@@ -177,7 +171,7 @@ trait WithFormSchemas
     protected function getColumnsSchema($record, $columns, $relation = 'relation')
     {
 
-        $columns[] =  SelectColumnField::make('relation_id')
+        $columns[] =  SelectField::make('relation_id')
             ->relationship(
                 name: $relation,
                 titleAttribute: 'name'
@@ -202,6 +196,13 @@ trait WithFormSchemas
                     ->form(fn (Column $column) => $this->getsearchDefaultValueSchemaForm($column))
 
                     ->action(function ($data, Column $column, Set $set) {
+                        if (data_get($data, 'column_values')) {
+                            $column->update([
+                                'default_value' =>   data_get($data, 'column_values')
+                            ]);
+                            $set('default_value', data_get($data, 'column_values'));
+                            return;
+                        }
                         if ($model = $column->defaults) {
                             $model->update($data);
                             $column->update([
@@ -220,7 +221,7 @@ trait WithFormSchemas
                 'md' => '3',
             ]);
 
-        $columns[] = SelectColumnField::make('type')
+        $columns[] = SelectField::make('type')
             ->required()
             ->options([
                 'string' => 'String',
@@ -261,7 +262,7 @@ trait WithFormSchemas
                 ->columnSpan([
                     'md' => '2',
                 ]),
-            SelectColumnField::make('operator')
+            SelectField::make('operator')
                 ->required()
                 ->options([
                     '=' => '=',
@@ -286,7 +287,7 @@ trait WithFormSchemas
                 ->columnSpan([
                     'md' => '3',
                 ]),
-            SelectColumnField::make('type')
+            SelectField::make('type')
                 ->required()
                 ->options([
                     'create' => 'Create',
@@ -310,7 +311,7 @@ trait WithFormSchemas
                 ->columnSpan([
                     'md' => '3',
                 ]),
-            SelectColumnField::make('column')
+            SelectField::make('column')
                 ->required()
                 ->options(function () use ($connection, $table) {
                     if ($connection) {
@@ -322,7 +323,7 @@ trait WithFormSchemas
                 ->columnSpan([
                     'md' => '4',
                 ]),
-            SelectColumnField::make('direction')
+            SelectField::make('direction')
                 ->required()
                 ->options([
                     'ASC' => 'ASC',
@@ -331,7 +332,7 @@ trait WithFormSchemas
                 ->columnSpan([
                     'md' => '3',
                 ]),
-            SelectColumnField::make('ordering')
+            SelectField::make('ordering')
                 ->required()
                 ->options([
                     '1' => '1',
@@ -391,7 +392,7 @@ trait WithFormSchemas
 
         return [
             Section::make()
-                ->schema(function () {
+                ->schema(function () use ($column) {
                     return [
                         SelectColumnField::make('connection_id')
                             ->live()
@@ -401,23 +402,23 @@ trait WithFormSchemas
                                 }
                                 return $state;
                             })
-                            ->required()
+                            ->required(fn (Get $get) => !$get('column_values'))
                             ->options(Connection::query()->pluck('name', 'id')->toArray())
                             ->columnSpan([
                                 'md' => '3',
                             ]),
-                        SelectColumnField::make('table_from')
+                        SelectField::make('table_from')
                             ->live()
-                            ->required()
+                            ->required(fn (Get $get) => !$get('column_values'))
                             ->options(function (Get $get) {
                                 return $this->getTablesOptions($get('connection_id'));
                             })
                             ->columnSpan([
                                 'md' => '3',
                             ]),
-                        SelectColumnField::make('column_key')
+                        SelectField::make('column_key')
                             ->live()
-                            ->required()
+                            ->required(fn (Get $get) => !$get('column_values'))
                             ->options(function (Get $get) {
                                 $connectionKey = $get('connection_id');
                                 if ($connectionTo = Cache::rememberForever($connectionKey, function () use ($connectionKey) {
@@ -431,9 +432,9 @@ trait WithFormSchemas
                             ->columnSpan([
                                 'md' => '3',
                             ]),
-                        SelectColumnField::make('column_label')
+                        SelectField::make('column_label')
                             ->live()
-                            ->required()
+                            ->required(fn (Get $get) => !$get('column_values'))
                             ->options(function (Get $get) {
                                 $connectionKey = $get('connection_id');
                                 if ($connectionTo = Cache::rememberForever($connectionKey, function () use ($connectionKey) {
@@ -447,12 +448,12 @@ trait WithFormSchemas
                             ->columnSpan([
                                 'md' => '3',
                             ]),
-                        SelectColumnField::make('column_value')
+                        SelectField::make('column_value')
                             ->visible(function (Get $get) {
                                 return $get('column_label') && $get('column_key');
                             })
                             ->searchable()
-                            ->required()
+                            ->required(fn (Get $get) => !$get('column_values'))
                             ->options(function (Get $get) {
                                 $connectionKey = $get('connection_id');
                                 if ($connectionTo = Cache::rememberForever($connectionKey, function () use ($connectionKey) {
@@ -466,7 +467,17 @@ trait WithFormSchemas
 
                                 return [];
                             })
-                            ->columnSpanFull()
+                            ->columnSpanFull(),
+                        Radio::make('column_values')
+                            ->options(Defalt::query()->pluck('table_from', 'id')->toArray())
+                            ->descriptions(Defalt::query()->pluck('table_from', 'id')->toArray())
+                            ->columns(2)
+                            ->live()
+                            ->afterStateUpdated(function (string $state, Set $set) use ($column) {
+                                $set('default_value', $state);
+                                return $state;
+                            })
+                            ->columnSpanFull(),
 
                     ];
                 })

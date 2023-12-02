@@ -7,6 +7,8 @@
 namespace Callcocam\DbRestore\Models;
 
 use Callcocam\Acl\Traits\HasUlids;
+use Callcocam\DbRestore\Helpers\DataBaseHelper;
+use Callcocam\DbRestore\Helpers\RestoreHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -29,5 +31,22 @@ class AbstractModelRestore extends Model
                 ->generateSlugsFrom($this->slugFrom())
                 ->saveSlugsTo($this->slugTo());
         }
+    }
+
+    
+    public function getConnFromAttribute()
+    {
+        if (!$this->connectionFrom) {
+            return [];
+        }
+        return RestoreHelper::getConnectionCloneOptions($this->connectionFrom);
+    }
+
+    public function getTableToOptionsAttribute()
+    {
+        if (!$this->connFrom) {
+            return [];
+        }
+        return DataBaseHelper::getTables($this->connFrom);
     }
 }

@@ -22,8 +22,10 @@ class Export extends AbstractModelRestore
  
     protected $table = 'restore_exports';
 
-    protected $with = ['connectionFrom', 'connectionTo', 'columns', 'filters', 'orderings'];   
+    protected $with = ['connectionFrom', 'connectionTo'];   
 
+    protected $appends = ['connTo', 'connFrom', 'tableToOptions'];
+    
     public function tenant()
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');

@@ -11,13 +11,15 @@ namespace Callcocam\DbRestore\Filament\Resources\Restores\ImportResource\Pages;
 use Callcocam\DbRestore\Filament\Resources\Restores\ImportResource;
 use Callcocam\DbRestore\Forms\Components\ConnectionToField;
 use Callcocam\DbRestore\Forms\Components\RestoreModelField;
-use Callcocam\DbRestore\Forms\Components\SelectColumnField; 
-use Callcocam\DbRestore\Forms\Components\SelectTableField; 
+use Callcocam\DbRestore\Forms\Components\SelectColumnField;
+use Callcocam\DbRestore\Forms\Components\SelectField;
+use Callcocam\DbRestore\Forms\Components\SelectTableField;
 use Callcocam\DbRestore\Forms\Components\SelectTableToField;
 use Callcocam\DbRestore\Forms\Components\TextareaField;
 use Callcocam\DbRestore\Forms\Components\TextInputField;
+use Callcocam\DbRestore\Helpers\DataBaseHelper;
 use Callcocam\DbRestore\Models\Import;
-use Callcocam\DbRestore\Helpers\RestoreHelper; 
+use Callcocam\DbRestore\Helpers\RestoreHelper;
 use Callcocam\DbRestore\Traits\HasStatusColumn;
 use Callcocam\DbRestore\Traits\HasTraduction;
 use Callcocam\DbRestore\Traits\HasUploadFormField;
@@ -27,7 +29,7 @@ use Callcocam\DbRestore\Traits\WithFormSchemas;
 use Callcocam\DbRestore\Traits\WithSections;
 use Callcocam\DbRestore\Traits\WithTables;
 use Filament\Actions;
-use Filament\Forms\Form; 
+use Filament\Forms\Form;
 use Filament\Forms\Set;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
@@ -63,25 +65,21 @@ class EditImport extends EditRecord
                     ->success()
                     ->send();
             });
-
-        if (config('db-restore.actions.tenant', true)) {
-            $actions[] =  Actions\Action::make('genearte-colums-chilrens-tenant')
-                ->icon('fas-copy')
-                ->color('info')
-                ->label('Gerar para o tenant colunas')
-                ->visible(fn (Import $record) => $record->columns->count() > 0)
-                ->requiresConfirmation()
-                ->action(function (Import $record) {
-                    if (class_exists('App\Core\Helpers\TenantHelper')) {
-                        if (method_exists(app('App\Core\Helpers\TenantHelper'), 'generateChildrens')) {
-                            return app('App\Core\Helpers\TenantHelper')->generateChildrens($record);
-                        }
-                    }
-                });
-        } else {
-            $actions[] = $this->getActionGeraColumnsChildren();
+        if (class_exists('App\Core\Helpers\TenantHelper')) {
+            if (method_exists(app('App\Core\Helpers\TenantHelper'), 'importForTenant')) {
+                $actions[] =  Actions\Action::make('genearte-colums-chilrens-tenant')
+                    ->icon('fas-copy')
+                    ->color('info')
+                    ->label('Gerar para o tenant selecionado')
+                    ->visible(fn (Import $record) => $record->columns->count() > 0)
+                    ->requiresConfirmation()
+                    ->action(function (Import $record) {
+                        return app('App\Core\Helpers\TenantHelper')->importForTenant($record);
+                    });
+            }
         }
-        $actions[] =  $this->getActionGeraColumns();
+
+        // $actions[] =  $this->getActionGeraColumns();
         $actions[] =  $this->getActionRestoreColumns();
         $actions[] =   Actions\DeleteAction::make();
         $actions[] =   Actions\ForceDeleteAction::make();
@@ -110,13 +108,16 @@ class EditImport extends EditRecord
                         'md' => 3
                     ])
                     ->required(),
-                SelectTableField::make('tenant_id')
+                SelectField::make('tenant_id')
                     ->relationship('tenant', 'name')
                     ->searchable()
                     ->columnSpan([
                         'md' => 3
                     ]),
-                SelectTableToField::makeTable('table_to', $record)
+
+                //Não é nessário reacaregar as colunas baseado em um outro select
+                SelectField::make('table_to')
+                    ->options($record->tableToOptions)
                     ->columnSpan([
                         'md' => 3
                     ]),
@@ -124,7 +125,7 @@ class EditImport extends EditRecord
                     ->columnSpan([
                         'md' => 4
                     ]),
-                SelectTableField::make('disk')
+                SelectField::make('disk')
                     ->options(function () {
                         $options = config('filesystems.disks', []);
                         $disks = array_keys($options);
@@ -133,7 +134,7 @@ class EditImport extends EditRecord
                     ->columnSpan([
                         'md' => 2
                     ])->required(),
-                SelectTableField::make('extension')
+                SelectField::make('extension')
                     ->options(function () {
                         $options = config('restore.extension', ['csv', 'xls', 'xlsx']);
                         $extensions = $options;
@@ -142,7 +143,7 @@ class EditImport extends EditRecord
                     ->columnSpan([
                         'md' => 2
                     ])->required(),
-                SelectTableField::make('delimiter')
+                SelectField::make('delimiter')
                     ->options(function () {
                         $options = config('restore.delimiter', [';', '|', ',']);
                         $delimiters = $options;
@@ -151,7 +152,7 @@ class EditImport extends EditRecord
                     ->columnSpan([
                         'md' => 2
                     ]),
-                SelectColumnField::make('type')
+                SelectField::make('type')
                     ->options([
                         'duplicar' => 'Duplicar',
                         'excluir' => 'Excluir',
@@ -170,7 +171,7 @@ class EditImport extends EditRecord
                 })
                     ->description($this->getTraduction('column_imports', 'restore', 'form',  'label'))
                     ->visible(fn (Import $record) => $record->table_to && $record->file),
- 
+
                 $this->getSectionFiltersSchema(record: $record)->visible(fn (Import $record) => $record->table_to && $record->file),
 
                 $this->getSectionOrderingsSchema($record)->visible(fn (Import $record) => $record->table_to && $record->file),

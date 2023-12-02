@@ -1,12 +1,16 @@
 <?php
+
 /**
-* Created by Claudio Campos.
-* User: callcocam@gmail.com, contato@sigasmart.com.br
-* https://www.sigasmart.com.br
-*/
+ * Created by Claudio Campos.
+ * User: callcocam@gmail.com, contato@sigasmart.com.br
+ * https://www.sigasmart.com.br
+ */
+
 namespace Callcocam\DbRestore\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory; 
+use Callcocam\DbRestore\Helpers\DataBaseHelper;
+use Callcocam\DbRestore\Helpers\RestoreHelper;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Callcocam\DbRestore\Models\Column;
 use Callcocam\DbRestore\Models\Connection;
 use Callcocam\DbRestore\Models\Model;
@@ -20,21 +24,23 @@ class Import extends AbstractModelRestore
 
     protected $table = 'restore_imports';
 
-    protected $with = ['connectionFrom', 'connectionTo', 'columns', 'filters', 'orderings', 'childrens'];
-    
+    protected $with = ['connectionFrom', 'connectionTo' ];
+
+    protected $appends = ['connTo', 'connFrom', 'tableToOptions'];
+
     public function tenant()
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
-    
+
     public function connectionTo()
     {
-        return $this->belongsTo(Connection::class , 'connection_id');
+        return $this->belongsTo(Connection::class, 'connection_id');
     }
-    
+
     public function connectionFrom()
     {
-        return $this->belongsTo(Connection::class , 'connection_id');
+        return $this->belongsTo(Connection::class, 'connection_id');
     }
 
     public function columns()
@@ -46,7 +52,7 @@ class Import extends AbstractModelRestore
     {
         return $this->belongsTo(Model::class, 'restore_model_id');
     }
-    
+
     public function filters()
     {
         return $this->morphMany(Filter::class, 'filterable');
@@ -66,4 +72,13 @@ class Import extends AbstractModelRestore
     {
         return $this->hasMany(Sample::class, 'import_id');
     }
+
+    public function getConnToAttribute()
+    {
+        if (!$this->connectionTo) {
+            return null;
+        }
+        return RestoreHelper::getConnectionCloneOptions($this->connectionTo);
+    }
+
 }

@@ -17,8 +17,10 @@ class Restore extends AbstractModelRestore
 
     protected $table = 'restores';
 
-    protected $with = ['connectionFrom', 'connectionTo', 'columns', 'filters', 'orderings', 'childrens', 'shareds'];
+    protected $with = ['connectionFrom', 'connectionTo'];
 
+    protected $appends = ['connTo', 'connFrom', 'tableToOptions'];
+    
     public function tenant()
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
