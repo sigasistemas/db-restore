@@ -27,6 +27,8 @@ class FileHelper
 
     protected $headers;
 
+    protected $rows;
+
     public function __construct($record)
     {
         $this->record = $record;
@@ -57,11 +59,20 @@ class FileHelper
 
     public function getHeaders()
     {
-        $headers = $this->headers; 
+        $headers = $this->headers;
         if (isset($headers[1])) {
             return $headers[1];
         }
         return  $this->headers;
+    }
+
+    public function getRows()
+    {
+        $rows = $this->rows;
+        if (isset($rows[1])) {
+            unset($rows[1]);
+        }
+        return  $rows;
     }
 
     public function fileName()
@@ -107,20 +118,16 @@ class FileHelper
     public function load()
     {
 
-        $this->headers = Cache::rememberForever("{$this->record->file}-header", function () {
+        $inputFileName = Storage::disk(config('db-restore.disk'))->path($this->record->file);
+        $testAgainstFormats = [
+            \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLS,
+            \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLSX,
+            \PhpOffice\PhpSpreadsheet\IOFactory::READER_CSV,
+        ];
 
-            $inputFileName = Storage::disk(config('db-restore.disk'))->path($this->record->file);
-            $testAgainstFormats = [
-                \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLS,
-                \PhpOffice\PhpSpreadsheet\IOFactory::READER_XLSX,
-                \PhpOffice\PhpSpreadsheet\IOFactory::READER_CSV,
-            ];
-
-            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($inputFileName, 0, $testAgainstFormats);
-            return $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
-        });
-
-
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($inputFileName, 0, $testAgainstFormats);
+        $this->rows =  $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
+        $this->headers =  $this->rows;
         return $this;
     }
 

@@ -71,20 +71,7 @@ class EditImport extends EditRecord
                     $actions = array_merge($actions, app('App\Core\Helpers\ActitionsHelper')->getActions($this->record));
                 }
             }
-        // if (class_exists('App\Core\Helpers\TenantHelper')) {
-        //     if (method_exists(app('App\Core\Helpers\TenantHelper'), 'importForTenant')) {
-        //         $actions[] =  Actions\Action::make('genearte-colums-chilrens-tenant')
-        //             ->icon('fas-copy')
-        //             ->color('info')
-        //             ->label('Importar para o tenant selecionado')
-        //             ->visible(fn (Import $record) => $record->columns->count() > 0)
-        //             ->requiresConfirmation()
-        //             ->action(function (Import $record) {
-        //                 return app('App\Core\Helpers\TenantHelper')->importForTenant($record);
-        //             });
-        //     }
-        // }
-
+      
         // $actions[] =  $this->getActionGeraColumns();
         $actions[] =  $this->getActionRestoreColumns();
         $actions[] =   Actions\DeleteAction::make();
