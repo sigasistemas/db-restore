@@ -470,7 +470,7 @@ trait WithFormSchemas
                             ->columnSpanFull(),
                         Radio::make('column_values')
                             ->options(Defalt::query()->pluck('table_from', 'id')->toArray())
-                            ->descriptions(Defalt::query()->pluck('table_from', 'id')->toArray())
+                            ->descriptions(Defalt::query()->pluck('column_label', 'id')->toArray())
                             ->columns(2)
                             ->live()
                             ->afterStateUpdated(function (string $state, Set $set) use ($column) {
