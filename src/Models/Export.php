@@ -6,6 +6,7 @@
 */
 namespace Callcocam\DbRestore\Models;
 
+use Callcocam\DbRestore\Helpers\RestoreHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory; 
 use Callcocam\DbRestore\Models\AbstractModelRestore;
 use Callcocam\DbRestore\Models\Column;
@@ -69,5 +70,22 @@ class Export extends AbstractModelRestore
     public function childrens()
     {
         return $this->morphMany(Children::class, 'childrenable');
+    }
+
+    
+    public function getConnToAttribute()
+    {
+        if (!$this->connectionTo) {
+            return null;
+        }
+        return RestoreHelper::getConnectionCloneOptions($this->connectionTo);
+    }
+
+    public function getConnFromAttribute()
+    {
+        if (!$this->connectionFrom) {
+            return null;
+        }
+        return RestoreHelper::getConnectionCloneOptions($this->connectionFrom);
     }
 }

@@ -1,13 +1,16 @@
 <?php
+
 /**
-* Created by Claudio Campos.
-* User: callcocam@gmail.com, contato@sigasmart.com.br
-* https://www.sigasmart.com.br
-*/
+ * Created by Claudio Campos.
+ * User: callcocam@gmail.com, contato@sigasmart.com.br
+ * https://www.sigasmart.com.br
+ */
+
 namespace Callcocam\DbRestore\Models;
 
+use Callcocam\DbRestore\Helpers\RestoreHelper;
 use Callcocam\Tenant\Models\Tenant;
-use Illuminate\Database\Eloquent\Factories\HasFactory; 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Restore extends AbstractModelRestore
 {
@@ -20,12 +23,12 @@ class Restore extends AbstractModelRestore
     protected $with = ['connectionFrom', 'connectionTo'];
 
     protected $appends = ['connTo', 'connFrom', 'tableToOptions'];
-    
+
     public function tenant()
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');
     }
-    
+
     public function connections()
     {
         return $this->belongsTo(Connection::class);
@@ -74,5 +77,22 @@ class Restore extends AbstractModelRestore
     public function shareds()
     {
         return $this->hasMany(SharedItem::class);
+    }
+
+
+    public function getConnToAttribute()
+    {
+        if (!$this->connectionTo) {
+            return null;
+        }
+        return RestoreHelper::getConnectionCloneOptions($this->connectionTo);
+    }
+
+    public function getConnFromAttribute()
+    {
+        if (!$this->connectionFrom) {
+            return null;
+        }
+        return RestoreHelper::getConnectionCloneOptions($this->connectionFrom);
     }
 }

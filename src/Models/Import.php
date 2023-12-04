@@ -81,4 +81,12 @@ class Import extends AbstractModelRestore
         return RestoreHelper::getConnectionCloneOptions($this->connectionTo);
     }
 
+    public function getConnFromAttribute()
+    {
+        if (!$this->connectionFrom) {
+            return null;
+        }
+        return RestoreHelper::getConnectionCloneOptions($this->connectionFrom);
+    }
+
 }
