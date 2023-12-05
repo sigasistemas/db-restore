@@ -27,6 +27,17 @@ class Export extends AbstractModelRestore
 
     protected $appends = ['connTo', 'connFrom', 'tableToOptions'];
     
+    protected static function booted()
+    {
+        static::deleting(function (Export $model) {  
+            $model->columns()->forceDelete();
+            $model->filters()->forceDelete();
+            $model->orderings()->forceDelete();
+            $model->childrens()->forceDelete();
+            $model->pivots()->forceDelete(); 
+        });
+    }
+
     public function tenant()
     {
         return $this->belongsTo(Tenant::class, 'tenant_id');

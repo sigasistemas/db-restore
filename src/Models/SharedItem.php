@@ -22,7 +22,7 @@ class SharedItem extends AbstractModelRestore
 
     protected $appends = ['restore_momdel_name'];
 
-    protected $with = ['shared', 'restoreMomdel'];
+    // protected $with = ['shared', 'restoreMomdel'];
 
     public function shared()
     {
