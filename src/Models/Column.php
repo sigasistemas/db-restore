@@ -17,7 +17,7 @@ class Column extends AbstractModelRestore
 
     protected $table = 'restore_columns';
 
-    protected $with = ['relation', 'defaults'];
+    // protected $with = ['relation', 'defaults'];
 
     public function columnable()
     {

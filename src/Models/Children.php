@@ -17,7 +17,7 @@ class Children extends AbstractModelRestore
 
     protected $table = 'restore_childrens';
 
-    protected $with = ['restore', 'columns', 'filters', 'orderings'];
+    protected $with = ['restore'];
 
     public function childrenable()
     {

@@ -19,7 +19,7 @@ class Shared extends AbstractModelRestore
 
     protected $table = 'restore_shareds';
 
-    protected $with = ['columns', 'filters', 'orderings'];
+    // protected $with = ['columns', 'filters', 'orderings'];
 
     public function items()
     {
