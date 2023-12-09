@@ -14,6 +14,7 @@ use Callcocam\DbRestore\Forms\Components\SelectColumnToField;
 use Callcocam\DbRestore\Forms\Components\SelectTableFromField;
 use Callcocam\DbRestore\Forms\Components\SelectTableToField;
 use Callcocam\DbRestore\Forms\Components\TextInputField;
+use Callcocam\DbRestore\Models\Column;
 use Callcocam\DbRestore\Models\Shared;
 use Callcocam\DbRestore\Models\SharedItem;
 use Callcocam\DbRestore\Traits\HasTraduction;
@@ -21,8 +22,10 @@ use Callcocam\DbRestore\Traits\WithColumns;
 use Callcocam\DbRestore\Traits\WithFormSchemas;
 use Callcocam\DbRestore\Traits\WithSections;
 use Filament\Forms;
+use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Form;
+use Filament\Forms\Set;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -165,5 +168,11 @@ class SharedsRelationManager extends RelationManager
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public function getsearchDefaultValueSchemaFormAction($record)
+    {
+
+        return  null;
     }
 }

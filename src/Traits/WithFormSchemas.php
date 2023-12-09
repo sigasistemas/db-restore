@@ -146,6 +146,7 @@ trait WithFormSchemas
         return  $this->getColumnsSchema($record, $columns, $relation);
     }
 
+    //ESSE QUE ESTA SENDO USADO PARA SHARED MANAGER
     protected function getColumnsSchemaForm($record, $relation = 'relation')
     {
         $columns = [];
@@ -181,45 +182,19 @@ trait WithFormSchemas
                 'md' => '3',
             ]);
 
-        $columns[] =  TextInputField::make('default_value')
-            ->hintAction(
-                Action::make('searchDefaultValue')
-                    ->fillForm(function (Column $column) {
-                        if ($model = $column->defaults) {
-                            return $model->toArray();
-                        }
-                        return [];
-                    })
-                    ->visible(fn (Column $column) => $column->exists)
-                    ->label($this->getTraductionFormLabel('searchDefaultValue'))
-                    ->icon('fas-search')
-                    ->form(fn (Column $column) => $this->getsearchDefaultValueSchemaForm($column))
-
-                    ->action(function ($data, Column $column, Set $set) {
-                        if (data_get($data, 'column_values')) {
-                            $column->update([
-                                'default_value' =>   data_get($data, 'column_values')
-                            ]);
-                            $set('default_value', data_get($data, 'column_values'));
-                            return;
-                        }
-                        if ($model = $column->defaults) {
-                            $model->update($data);
-                            $column->update([
-                                'default_value' =>  data_get($data, 'column_value')
-                            ]);
-                        } else {
-                            $model = $column->defaults()->create($data);
-                            $column->update([
-                                'default_value' =>   data_get($data, 'column_value')
-                            ]);
-                        }
-                        $set('default_value', data_get($data, 'column_value'));
-                    })
-            )
-            ->columnSpan([
-                'md' => '3',
-            ]);
+        $action = $this->getsearchDefaultValueSchemaFormAction($record);
+        if ($action) {
+            $columns[] =  TextInputField::make('default_value')
+                ->hintAction($action)
+                ->columnSpan([
+                    'md' => '3',
+                ]);
+        } else {
+            $columns[] =  TextInputField::make('default_value')
+                ->columnSpan([
+                    'md' => '3',
+                ]);
+        }
 
         $columns[] = SelectField::make('type')
             ->required()
@@ -245,6 +220,44 @@ trait WithFormSchemas
                 'md' => '2',
             ]);
         return  $columns;
+    }
+
+    public function getsearchDefaultValueSchemaFormAction($record)
+    {
+        return
+            Action::make('searchDefaultValue')
+            ->fillForm(function (Column $column) {
+                if ($model = $column->defaults) {
+                    return $model->toArray();
+                }
+                return [];
+            })
+            ->visible(fn (Column $column) => $column->exists)
+            ->label($this->getTraductionFormLabel('searchDefaultValue'))
+            ->icon('fas-search')
+            ->form(fn (Column $column) => $this->getsearchDefaultValueSchemaForm($column))
+
+            ->action(function ($data, Column $column, Set $set) {
+                if (data_get($data, 'column_values')) {
+                    $column->update([
+                        'default_value' =>   data_get($data, 'column_values')
+                    ]);
+                    $set('default_value', data_get($data, 'column_values'));
+                    return;
+                }
+                if ($model = $column->defaults) {
+                    $model->update($data);
+                    $column->update([
+                        'default_value' =>  data_get($data, 'column_value')
+                    ]);
+                } else {
+                    $model = $column->defaults()->create($data);
+                    $column->update([
+                        'default_value' =>   data_get($data, 'column_value')
+                    ]);
+                }
+                $set('default_value', data_get($data, 'column_value'));
+            });
     }
 
     protected function getFiltersSchemaForm($connection, $table, $connectionTo)
