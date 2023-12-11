@@ -22,9 +22,9 @@ class Defalt extends AbstractModelRestore
         return $this->morphTo();
     }
 
-    protected $casts = [
-        'column_value' => 'array'
-    ];
+    // protected $casts = [
+    //     'column_value' => 'array'
+    // ];
 
     protected function slugTo()
     {
