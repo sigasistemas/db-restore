@@ -118,8 +118,8 @@ class RestoreHelper
         $data = [];
         foreach ($columns as $column) {
             $name = $column[$column_name];
-            if (isset($data[$name])) { 
-                if (is_array(data_get($data,  sprintf("%s.column_from", $name)))) { 
+            if (isset($data[$name])) {
+                if (is_array(data_get($data,  sprintf("%s.column_from", $name)))) {
                     $names = data_get($data, sprintf("%s.column_from", $name));
                     $names[$column['column_from']] = $column['column_from'];
                 } else {
@@ -139,8 +139,8 @@ class RestoreHelper
                     'type' => $column['type'],
                 ];
             }
-        } 
-         return $data;
+        }
+        return $data;
     }
 
     public static function getFromDatabaseRows(AbstractModelRestore $restore, $from_table, $filters = null, $orderings = null, $tableTo = null)
@@ -253,6 +253,9 @@ class RestoreHelper
 
         if ($relation) {
             $val = data_get($chunk, $column_from);
+            if(ctype_digit($val)){
+                $val = (int) $val;
+            }
             //Conexao da tabela de destino
             // $connectionName = $connectionName;
             //Nome da tabela de destino que vamos recuperar o dado
@@ -367,7 +370,6 @@ class RestoreHelper
         $sharedItems = $record->shareds;
 
         if ($sharedItems) {
-
             return $sharedItems->map(function ($sharedItem) use ($record) {
                 //Todo shared item tem um shared
                 //O sahred tem um restore
@@ -390,15 +392,18 @@ class RestoreHelper
                 //Vamos pegar a conexao da tabela de destino
                 $connectionName = RestoreHelper::getConnectionCloneOptions($record->connectionTo);
                 //Como o shared é um relacionamento polimorfico, vamos adicionar a coluna de tipo e id
-
-                $rows = collect($rows)->map(function ($row) use ($sharedItem, $shared, $connectionName, $record) {
+                //Vamos pegar o nome da tabela de destino
+                $to_table = $shared->table_to;
+                //Vamos pegar as colunas da tabela de destino
+                $to_columns = static::getColumsSchema($columns, $to_table, 'column_to');
+                //Vamos adicionar a coluna de tipo e id ex: addressable_id, addressable_type
+                $morph_column_type =   $sharedItem->morph_column_type;
+                $morph_column_id = $sharedItem->morph_column_id;
+                $rows = collect($rows)->map(function ($row) use ($sharedItem, $shared, $connectionName, $record, $morph_column_type, $morph_column_id) {
                     //Vamos pegar a tabela de destino
                     $query = DB::connection($connectionName)->table($record->table_to)->where($shared->column_to, data_get($row, $shared->column_from));
                     //Vamos pegar o id da tabela de destino
                     $parentId = $query->value('id');
-                    //Vamos adicionar a coluna de tipo e id ex: addressable_id, addressable_type
-                    $morph_column_type =   $sharedItem->morph_column_type;
-                    $morph_column_id = $sharedItem->morph_column_id;
                     //Vamos adicionar os valores da coluna de tipo e id
                     $row->{$morph_column_type} = $sharedItem->restore_momdel_name;
                     $row->{$morph_column_id} = $parentId;
@@ -410,12 +415,34 @@ class RestoreHelper
                         return !empty(data_get($row, $morph_column_id));
                     })
                     ->toArray();
+
+                if (!array_key_exists($morph_column_type, $to_columns)) {
+                    $to_columns[$morph_column_type] = [
+                        'columns' => sprintf('%s.%s', $record->table_from, $morph_column_type),
+                        'relation_id' => null,
+                        'relation' => null,
+                        'restore_id' => null,
+                        'column_from' => $morph_column_type,
+                        'column_to' => $morph_column_type,
+                        'default_value' => null,
+                        'type' => 'string',
+                    ];
+                }
+                if (!array_key_exists($morph_column_id, $to_columns)) {
+                    $to_columns[$morph_column_id] = [
+                        'columns' => sprintf('%s.%s', $record->table_from, $morph_column_id),
+                        'relation_id' => null,
+                        'relation' => null,
+                        'restore_id' => null,
+                        'column_from' => $morph_column_id,
+                        'column_to' => $morph_column_id,
+                        'default_value' => null,
+                        'type' => 'string',
+                    ];
+                }
+
                 //Vamos remover os dados baseados nos filtros do shared do tipo delete ou excluir
                 static::beforeRemoveFilters($shared);
-                //Vamos pegar o nome da tabela de destino
-                $to_table = $shared->table_to;
-                //Vamos pegar as colunas da tabela de destino
-                $to_columns = static::getColumsSchema($columns, $to_table, 'column_to');
                 //Vamos dividir os dados em pedaços de 1000
                 $chunks = array_chunk($rows, 1000);
                 //Vamos adicionar os jobs na fila
@@ -499,7 +526,12 @@ class RestoreHelper
             if (!array_key_exists('id', $to_columns)) {
                 $data['id'] = strtolower((string) Str::ulid());
                 if (data_get($row, 'id')) {
-                    $data[config('db-restore.oldId', 'old_id')] = data_get($row, 'id');
+                    $oldIdKey = config('db-restore.oldId', 'old_id');
+                    $oldVal = data_get($row, 'id');
+                    if (ctype_digit($oldVal)) {
+                        $oldVal = (int) $oldVal;
+                    }
+                    $data[$oldIdKey] = $oldVal;
                 }
             } else {
                 //Se estiver vazio, cria um ulid para a coluna id
@@ -507,9 +539,12 @@ class RestoreHelper
                     $data['id'] = strtolower((string) Str::ulid());
                 }
             }
-
-            $data['created_at'] = static::validateDate(data_get($row, 'created_at')) ? data_get($row, 'created_at') : now()->format('Y-m-d H:i:s');
-            $data['updated_at'] = static::validateDate(data_get($row, 'updated_at')) ? data_get($row, 'updated_at') : now()->format('Y-m-d H:i:s');
+            if (!array_key_exists('created_at', $to_columns)) {
+                $data['created_at'] = static::validateDate(data_get($row, 'created_at')) ? data_get($row, 'created_at') : now()->format('Y-m-d H:i:s');
+            }
+            if (!array_key_exists('updated_at', $to_columns)) {
+                $data['updated_at'] = static::validateDate(data_get($row, 'updated_at')) ? data_get($row, 'updated_at') : now()->format('Y-m-d H:i:s');
+            }
             $data['deleted_at'] = static::validateDate(data_get($row, 'deleted_at')) ? data_get($row, 'deleted_at') : null;
 
             $data = static::getDataStatusValues($row, $data);
@@ -678,7 +713,7 @@ class RestoreHelper
 
     protected static function getDataStatusValues($row, $data)
     {
-        if (isset($data['status'])) {
+        if (!isset($data['status'])) {
             $status = data_get($row, 'status');
             if (!in_array($data['status'], ['published', 'draft'])) {
                 $data['status'] = (int)$status ? 'published' : 'draft';
@@ -767,7 +802,7 @@ class RestoreHelper
                 break;
             case 'array':
                 if (is_array($column_from)) {
-                    $data = []; 
+                    $data = [];
                     foreach ($column_from as $key => $value) {
                         $data[$key] = data_get($chunk, $value, $default_value);
                     }
