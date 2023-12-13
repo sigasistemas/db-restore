@@ -253,7 +253,7 @@ class RestoreHelper
 
         if ($relation) {
             $val = data_get($chunk, $column_from);
-            if(ctype_digit($val)){
+            if (ctype_digit($val)) {
                 $val = (int) $val;
             }
             //Conexao da tabela de destino
@@ -540,7 +540,7 @@ class RestoreHelper
                 }
             }
             if (!array_key_exists('created_at', $to_columns)) {
-                $data['created_at'] = static::validateDate(data_get($row, 'created_at'), 'Y-m-d') ? data_get($row, 'created_at') : now()->format('Y-m-d H:i:s');
+                $data['created_at'] = static::validateDate(data_get($row, 'created_at')) ? data_get($row, 'created_at') : now()->format('Y-m-d H:i:s');
             }
             if (!array_key_exists('updated_at', $to_columns)) {
                 $data['updated_at'] = static::validateDate(data_get($row, 'updated_at')) ? data_get($row, 'updated_at') : now()->format('Y-m-d H:i:s');
