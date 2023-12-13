@@ -540,7 +540,7 @@ class RestoreHelper
                 }
             }
             if (!array_key_exists('created_at', $to_columns)) {
-                $data['created_at'] = static::validateDate(data_get($row, 'created_at')) ? data_get($row, 'created_at') : now()->format('Y-m-d H:i:s');
+                $data['created_at'] = static::validateDate(data_get($row, 'created_at'), 'Y-m-d') ? data_get($row, 'created_at') : now()->format('Y-m-d H:i:s');
             }
             if (!array_key_exists('updated_at', $to_columns)) {
                 $data['updated_at'] = static::validateDate(data_get($row, 'updated_at')) ? data_get($row, 'updated_at') : now()->format('Y-m-d H:i:s');
@@ -748,7 +748,7 @@ class RestoreHelper
     {
         switch ($type) {
             case 'date':
-                return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+                return  static::validateDate(data_get($chunk, $column_from), 'Y-m-d') ? data_get($chunk, $column_from) : $default_value;
 
                 break;
             case 'datetime':
@@ -756,7 +756,7 @@ class RestoreHelper
 
                 break;
             case 'time':
-                return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+                return  static::validateDate(data_get($chunk, $column_from), 'H:i:s') ? data_get($chunk, $column_from) : $default_value;
 
                 break;
             case 'timestamp':
@@ -764,7 +764,7 @@ class RestoreHelper
 
                 break;
             case 'year':
-                return  static::validateDate(data_get($chunk, $column_from)) ? data_get($chunk, $column_from) : $default_value;
+                return  static::validateDate(data_get($chunk, $column_from), 'Y') ? data_get($chunk, $column_from) : $default_value;
 
                 break;
             case 'binary':
