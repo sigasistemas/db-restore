@@ -713,11 +713,13 @@ class RestoreHelper
 
     protected static function getDataStatusValues($row, $data)
     {
-        if (!isset($data['status'])) {
+        if (isset($data['status'])) {
             $status = data_get($row, 'status');
-            if (!in_array($data['status'], ['published', 'draft'])) {
-                $data['status'] = (int)$status ? 'published' : 'draft';
+            if (ctype_digit($status)) {
+                $data['status'] = data_get(config('db-restore.status', ['draft', 'published']), $status, 'draft');
             }
+        } else {
+            $data['status'] = 'published';
         }
         return $data;
     }
